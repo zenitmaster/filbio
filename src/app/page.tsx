@@ -1,9 +1,9 @@
 "use client";
 
 import { CaseHeader } from "@/components/CaseHeader";
-import { GeneMapperImport } from "@/components/GeneMapperImport";
 import { GenotypeGrid } from "@/components/GenotypeGrid";
 import { DYE_VAR } from "@/components/LocusTrace";
+import { ProfileImport } from "@/components/ProfileImport";
 import { ResultPanel } from "@/components/ResultPanel";
 import { Panel } from "@/components/ui";
 import { useT } from "@/lib/i18n";
@@ -32,7 +32,7 @@ export default function CasePage() {
                   </li>
                 ))}
               </ul>
-              <GeneMapperImport />
+              <ProfileImport />
             </div>
           }
         >

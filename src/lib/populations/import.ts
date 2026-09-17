@@ -6,6 +6,7 @@ import {
   type LocusId,
   type Population,
 } from "@/lib/genetics";
+import { parseDelimited } from "@/lib/import/csv";
 
 /**
  * Reads an allele-frequency table laid out the way laboratories keep them in a
@@ -42,20 +43,13 @@ export interface ImportResult {
   suggestedFiller: number | null;
 }
 
-function splitLine(line: string, delimiter: string): string[] {
-  return line.split(delimiter).map((cell) => cell.trim().replace(/^"|"$/g, ""));
-}
-
-function detectDelimiter(text: string): string {
-  const first = text.split(/\r?\n/, 1)[0] ?? "";
-  if (first.includes("\t")) return "\t";
-  if (first.includes(";")) return ";";
-  return ",";
-}
-
-/** "28,5", "1.1*" and " 0.285 " are all numbers to a person reading the sheet. */
-function parseNumber(raw: string, decimalComma: boolean): { value: number; clean: boolean } | null {
-  const text = decimalComma ? raw.replace(",", ".") : raw;
+/**
+ * "28,5", "1.1*" and " 0.285 " are all numbers to a person reading the sheet.
+ * Once the file has been split into cells, a comma inside one can only be a
+ * decimal mark.
+ */
+function parseNumber(raw: string): { value: number; clean: boolean } | null {
+  const text = raw.replace(",", ".");
   const match = /^[-+]?(\d+\.?\d*|\.\d+)(e[-+]?\d+)?/i.exec(text.trim());
   if (!match) return null;
   return { value: Number(match[0]), clean: match[0].length === text.trim().length };
@@ -72,12 +66,9 @@ export function parseFrequencyTable(text: string, options: ImportOptions): Impor
     suggestedFiller: null,
   };
 
-  const lines = text.split(/\r?\n/).filter((line) => line.trim() !== "");
-  if (lines.length < 2) return { ...empty, problems: [{ kind: "noLoci" }] };
-
-  const delimiter = detectDelimiter(text);
-  const decimalComma = delimiter !== ",";
-  const header = splitLine(lines[0], delimiter);
+  const { rows } = parseDelimited(text);
+  if (rows.length < 2) return { ...empty, problems: [{ kind: "noLoci" }] };
+  const header = rows[0];
 
   const columns: Array<{ index: number; locus: LocusId }> = [];
   header.slice(1).forEach((name, offset) => {
@@ -91,8 +82,7 @@ export function parseFrequencyTable(text: string, options: ImportOptions): Impor
 
   // First pass: collect the raw numbers, so units and fillers can be judged on all of them.
   const cells: Array<{ locus: LocusId; allele: string; value: number }> = [];
-  lines.slice(1).forEach((line, lineIndex) => {
-    const row = splitLine(line, delimiter);
+  rows.slice(1).forEach((row, lineIndex) => {
     const label = row[0] ?? "";
     const allele = parseAllele(label);
     if (!allele.ok) {
@@ -103,7 +93,7 @@ export function parseFrequencyTable(text: string, options: ImportOptions): Impor
     for (const { index, locus } of columns) {
       const raw = row[index] ?? "";
       if (raw === "") continue;
-      const parsed = parseNumber(raw, decimalComma);
+      const parsed = parseNumber(raw);
       if (!parsed || parsed.value < 0) {
         problems.push({ kind: "badValue", locus, allele: allele.allele, value: raw });
         continue;
@@ -172,6 +162,16 @@ export function buildCustomPopulation(input: {
     source: { citation: input.citation },
     loci,
   };
+}
+
+/**
+ * An empty frequency table for the given markers: the header the importer
+ * expects, and one blank row per allele of a typical ladder to show the shape.
+ */
+export function frequencyTemplateCsv(loci: LocusId[], alleleLabel: string): string {
+  const alleles = Array.from({ length: 31 }, (_, index) => String(index + 5)); // 5 ... 35
+  const rows = [[alleleLabel, ...loci], ...alleles.map((allele) => [allele, ...loci.map(() => "")])];
+  return `﻿${rows.map((row) => row.join(",")).join("\r\n")}\r\n`;
 }
 
 /** The same layout the importer reads, as proportions, so a round trip is lossless. */

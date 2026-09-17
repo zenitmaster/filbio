@@ -46,12 +46,24 @@ export const es = {
   "case.import.error": "El archivo no es un caso de FilBio válido.",
   "case.viewReport": "Ver informe",
 
-  "gm.open": "Importar de GeneMapper",
-  "gm.title": "Importar perfiles de GeneMapper",
+  "gm.open": "Importar perfiles",
+  "gm.title": "Importar perfiles",
   "gm.intro":
-    "En GeneMapper ID o ID-X, abra la tabla de genotipos y use File ▸ Export Table para guardarla como texto delimitado por tabuladores (.txt) o como .csv. El archivo se lee en este navegador; no se envía a ningún servidor.",
-  "gm.file": "Elegir el archivo exportado",
+    "Cargue la tabla de genotipos que exporta GeneMapper ID o ID-X (File ▸ Export Table, como .txt o .csv), o un archivo CSV hecho con la plantilla. El formato se reconoce solo. El archivo se lee en este navegador; no se envía a ningún servidor.",
+  "gm.file": "Elegir archivo",
   "gm.paste": "o pegue aquí su contenido",
+  "import.template": "Descargar plantilla CSV",
+  "import.template.hint":
+    "La plantilla lleva los marcadores del kit {kit} y una fila por marcador, como la tabla de captura. Llénela en Excel y guárdela como CSV.",
+  "import.template.filename": "plantilla-filbio",
+  "import.template.frequencies": "frecuencias",
+  "gm.format.genemapper": "Tabla de GeneMapper",
+  "gm.format.template": "Plantilla CSV",
+  "gm.people": "{people}; {markers} marcadores.",
+  "gm.unknownMarkers": "Marcadores no reconocidos, se omiten: {markers}.",
+  "gm.unknownColumns": "Columnas no reconocidas, se omiten: {columns}.",
+  "gm.problem.unrecognised":
+    "No se reconoce el archivo. Debe ser la tabla de genotipos de GeneMapper (columnas «Marker» y «Allele 1») o la plantilla CSV (una columna «Marcador» y dos columnas por persona).",
   "gm.found": "{samples} muestras, {markers} marcadores.",
   "gm.skipped": "No se usan: {markers}.",
   "gm.assign": "¿Quién es quién?",
@@ -69,6 +81,8 @@ export const es = {
   "gm.warning.missing": "{who}: sin lectura en {markers}.",
   "gm.duplicate": "La misma muestra está asignada a dos personas.",
   "gm.replace": "Se reemplazará el perfil ya capturado de cada persona elegida.",
+  "gm.clearOthers":
+    "Vaciar también el perfil ya capturado de {people}, que no viene en el archivo. Si se conserva, seguirá entrando en el cálculo.",
   "gm.import": "Importar perfiles",
 
   "role.known.male": "Madre biológica",

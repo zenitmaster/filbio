@@ -48,12 +48,24 @@ export const en: Record<MessageKey, string> = {
   "case.import.error": "That file is not a valid FilBio case.",
   "case.viewReport": "View report",
 
-  "gm.open": "Import from GeneMapper",
-  "gm.title": "Import profiles from GeneMapper",
+  "gm.open": "Import profiles",
+  "gm.title": "Import profiles",
   "gm.intro":
-    "In GeneMapper ID or ID-X, open the Genotypes table and use File ▸ Export Table to save it as tab-delimited text (.txt) or as .csv. The file is read in this browser; it is not sent to any server.",
-  "gm.file": "Choose the exported file",
+    "Load the genotype table that GeneMapper ID or ID-X exports (File ▸ Export Table, as .txt or .csv), or a CSV file made from the template. The format is recognised automatically. The file is read in this browser; it is not sent to any server.",
+  "gm.file": "Choose a file",
   "gm.paste": "or paste its contents here",
+  "import.template": "Download CSV template",
+  "import.template.hint":
+    "The template carries the markers of the {kit} kit, one row per marker, like the entry table. Fill it in with Excel and save it as CSV.",
+  "import.template.filename": "filbio-template",
+  "import.template.frequencies": "frequencies",
+  "gm.format.genemapper": "GeneMapper table",
+  "gm.format.template": "CSV template",
+  "gm.people": "{people}; {markers} markers.",
+  "gm.unknownMarkers": "Unrecognised markers, skipped: {markers}.",
+  "gm.unknownColumns": "Unrecognised columns, skipped: {columns}.",
+  "gm.problem.unrecognised":
+    "The file is not recognised. It must be GeneMapper's genotype table (“Marker” and “Allele 1” columns) or the CSV template (a “Marker” column and two columns per person).",
   "gm.found": "{samples} samples, {markers} markers.",
   "gm.skipped": "Not used: {markers}.",
   "gm.assign": "Who is who?",
@@ -71,6 +83,8 @@ export const en: Record<MessageKey, string> = {
   "gm.warning.missing": "{who}: no call at {markers}.",
   "gm.duplicate": "The same sample is assigned to two people.",
   "gm.replace": "The profile already entered for each person chosen will be replaced.",
+  "gm.clearOthers":
+    "Also clear the profile already entered for {people}, which the file does not include. If it is kept, it will still take part in the calculation.",
   "gm.import": "Import profiles",
 
   "role.known.male": "Biological mother",

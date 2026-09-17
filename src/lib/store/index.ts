@@ -69,9 +69,14 @@ interface AppState {
   setAlleles: (cells: Array<{ locus: string; role: SubjectRole; index: 0 | 1; value: string }>) => void;
   /**
    * Replaces the whole profile of each person given (every marker, amelogenin
-   * included), leaving the others untouched. Keys are markers, or SEX_MARKER.
+   * included). Keys are markers, or SEX_MARKER. With `clearOthers` the people
+   * not given are emptied too, so that nobody from an earlier case stays behind
+   * in the calculation; without it they are left as they are.
    */
-  importProfiles: (profiles: Partial<Record<SubjectRole, Record<string, [string, string]>>>) => void;
+  importProfiles: (
+    profiles: Partial<Record<SubjectRole, Record<string, [string, string]>>>,
+    options?: { clearOthers?: boolean },
+  ) => void;
   clearCase: () => void;
   loadExample: (id: ExampleId) => void;
   replaceCase: (data: CaseData) => void;
@@ -142,28 +147,25 @@ export const useAppStore = create<AppState>()(
           return { caseData: { ...state.caseData, alleles } };
         }),
 
-      importProfiles: (profiles) =>
+      importProfiles: (profiles, { clearOthers = false } = {}) =>
         set((state) => {
           const alleles = { ...state.caseData.alleles };
           const amelogenin = { ...state.caseData.amelogenin };
-          for (const [role, profile] of Object.entries(profiles) as Array<[SubjectRole, Record<string, [string, string]>]>) {
+          const roles: SubjectRole[] = ["known", "child", "alleged"];
+          for (const role of roles) {
+            const profile = profiles[role];
+            if (!profile && !clearOthers) continue;
             // Clear first: a marker missing from the file must not keep an old value.
             for (const locus of Object.keys(alleles)) alleles[locus] = { ...alleles[locus], [role]: ["", ""] };
             amelogenin[role] = ["", ""];
-            for (const [marker, pair] of Object.entries(profile)) {
+            for (const [marker, pair] of Object.entries(profile ?? {})) {
               if (marker === SEX_MARKER) amelogenin[role] = [pair[0].toUpperCase(), pair[1].toUpperCase()];
               else alleles[marker] = { ...(alleles[marker] ?? emptyEntry()), [role]: pair };
             }
           }
-          return {
-            caseData: {
-              ...state.caseData,
-              // A known parent only takes part in a trio.
-              mode: profiles.known ? "trio" : state.caseData.mode,
-              alleles,
-              amelogenin,
-            },
-          };
+          // A known parent makes it a trio; emptying that person leaves a duo.
+          const mode = profiles.known ? "trio" : clearOthers ? "duo" : state.caseData.mode;
+          return { caseData: { ...state.caseData, mode, alleles, amelogenin } };
         }),
 
       clearCase: () => set({ caseData: emptyCase() }),

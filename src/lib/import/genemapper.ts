@@ -207,11 +207,4 @@ export function suggestRoles(samples: ImportedSample[], allegedSex: ParentSex): 
   return suggestion;
 }
 
-/** GeneMapper writes the system code page on Windows; fall back to it when UTF-8 fails. */
-export function decodeExport(bytes: ArrayBuffer): string {
-  try {
-    return new TextDecoder("utf-8", { fatal: true }).decode(bytes);
-  } catch {
-    return new TextDecoder("windows-1252").decode(bytes);
-  }
-}
+export { decodeExport } from "./csv";
