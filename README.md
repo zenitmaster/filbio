@@ -3,6 +3,8 @@
 Cálculo de filiación biológica (paternidad y maternidad) a partir de marcadores STR.
 *Biological filiation (paternity and maternity) calculations from STR markers.*
 
+**Use it at [filbio.vercel.app](https://filbio.vercel.app).** Nothing to install, no account.
+
 FilBio takes the STR profiles of a child, an alleged parent and, when available, the
 known parent, and returns the index at each marker, the combined index, the
 probability of parentage and a printable report. The reference population can be
