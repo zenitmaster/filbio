@@ -6,8 +6,10 @@ import { Button, cn, Field, Notice, Panel, Select, TextArea, TextInput } from "@
 import { kitById, lociOfKit, type Population } from "@/lib/genetics";
 import { useLocale, useT, type Translate } from "@/lib/i18n";
 import { BUILTIN_POPULATIONS, findPopulation, POPULATION_GROUPS } from "@/lib/populations";
+import { decodeExport } from "@/lib/import/csv";
 import {
   buildCustomPopulation,
+  frequencyTemplateCsv,
   parseFrequencyTable,
   populationToCsv,
   type ImportOptions,
@@ -268,6 +270,7 @@ function problemText(problem: ImportProblem, t: Translate): string {
 
 function ImportPanel({ onSaved }: { onSaved: (population: Population) => void }) {
   const t = useT();
+  const kitId = useAppStore((state) => state.settings.kitId);
   const [text, setText] = useState("");
   const [name, setName] = useState("");
   const [citation, setCitation] = useState("");
@@ -287,8 +290,18 @@ function ImportPanel({ onSaved }: { onSaved: (population: Population) => void })
     const file = event.target.files?.[0];
     event.target.value = "";
     if (!file) return;
-    setText(await file.text());
+    setText(decodeExport(await file.arrayBuffer()));
     if (!name) setName(file.name.replace(/\.[^.]+$/, ""));
+  };
+
+  // Columns for the markers of the kit in use; the analyst fills in the rows.
+  const downloadTemplate = () => {
+    const csv = frequencyTemplateCsv(lociOfKit(kitById(kitId)), t("pop.allele"));
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+    link.download = `${t("import.template.filename")}-${t("import.template.frequencies")}.csv`;
+    link.click();
+    URL.revokeObjectURL(link.href);
   };
 
   const save = () => {
@@ -321,10 +334,15 @@ function ImportPanel({ onSaved }: { onSaved: (population: Population) => void })
             />
           )}
         </Field>
-        <label className="w-fit cursor-pointer text-sm font-medium text-ink underline underline-offset-2 has-focus-visible:outline-2 has-focus-visible:outline-focus">
-          {t("import.file")}
-          <input type="file" accept=".csv,.tsv,.txt,text/csv,text/plain" onChange={readFile} className="sr-only" />
-        </label>
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm font-medium text-ink">
+          <label className="cursor-pointer underline underline-offset-2 has-focus-visible:outline-2 has-focus-visible:outline-focus">
+            {t("import.file")}
+            <input type="file" accept=".csv,.tsv,.txt,text/csv,text/plain" onChange={readFile} className="sr-only" />
+          </label>
+          <button type="button" onClick={downloadTemplate} className="cursor-pointer underline underline-offset-2">
+            {t("import.template")}
+          </button>
+        </div>
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Field label={t("import.name")}>

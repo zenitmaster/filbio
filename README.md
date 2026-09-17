@@ -39,6 +39,13 @@ profiles never leave the browser they are typed into.**
   (File ▸ Export Table), and the samples are matched to mother, child and alleged father from
   their names. The kit is recognised from the markers; off-ladder calls and markers with more
   than two alleles are pointed out.
+- **Import from a CSV template**: download a template for the selected kit (one row per
+  marker, two columns per person, like the entry table), fill it in with Excel and load it
+  back. The same dialog recognises either format. Columns are matched by their headers, in
+  Spanish or English or as laboratory codes (MB, HP, PP), and both comma- and
+  semicolon-separated files with decimal commas are read. If the file leaves out someone who
+  already has alleles typed in, the import offers to empty them rather than let a person
+  from an earlier case stay in the calculation.
 - Spreadsheet-style entry: arrow keys, Enter to move down a column, paste a block from Excel.
 - Spanish and English, light and dark, printable report, cases saved to and opened from a file.
 
@@ -80,7 +87,7 @@ npm run build      # static site in out/
 | --- | --- |
 | `src/lib/genetics/` | The engine: alleles, frequencies, mutation model, per-marker index, case verdict, number formatting. Pure TypeScript, no UI. |
 | `src/lib/populations/` | Bundled population registry and the spreadsheet importer. |
-| `src/lib/import/` | Reader for GeneMapper genotype-table exports. |
+| `src/lib/import/` | Readers for GeneMapper genotype-table exports and for the CSV profile template; the CSV parser they share. |
 | `src/lib/store/` | Case and settings state, persisted in the browser. |
 | `src/lib/report/` | Report wording, Spanish and English. |
 | `src/components/`, `src/app/` | Interface. |

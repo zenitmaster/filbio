@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildCustomPopulation, parseFrequencyTable, populationToCsv } from "./import";
+import { buildCustomPopulation, frequencyTemplateCsv, parseFrequencyTable, populationToCsv } from "./import";
 
 const AUTO = { units: "auto", filler: null } as const;
 
@@ -72,6 +72,26 @@ describe("parseFrequencyTable", () => {
   it("reads decimal commas when the file is semicolon-separated", () => {
     const result = parseFrequencyTable("Alelo;FGA\n21;45,5\n22;54,5", AUTO);
     expect(result.loci.FGA).toEqual({ "21": 0.455, "22": 0.545 });
+  });
+
+  it("reads decimal commas that Excel quoted in a comma-separated file", () => {
+    const result = parseFrequencyTable('Alelo,FGA,TH01\n21,"45,5","9,3"\n22,"54,5","90,7"', AUTO);
+    expect(result.loci).toEqual({ FGA: { "21": 0.455, "22": 0.545 }, TH01: { "21": 0.093, "22": 0.907 } });
+    expect(result.problems).toEqual([]);
+  });
+
+  it("reads back the template it hands out, once filled in", () => {
+    const template = frequencyTemplateCsv(["FGA", "TH01", "Penta E"], "Alelo");
+    expect(template.startsWith("﻿Alelo,FGA,TH01,Penta E\r\n5,,,\r\n")).toBe(true);
+    // Blank as handed out: the markers are recognised, there is just nothing in them yet.
+    expect(parseFrequencyTable(template, AUTO)).toMatchObject({ lociCount: 0, problems: [] });
+
+    const filled = template.replace("\r\n6,,,", "\r\n6,0.4,0.25,").replace("\r\n7,,,", "\r\n7,0.6,0.75,1");
+    expect(parseFrequencyTable(filled, AUTO).loci).toEqual({
+      FGA: { "6": 0.4, "7": 0.6 },
+      TH01: { "6": 0.25, "7": 0.75 },
+      "Penta E": { "7": 1 },
+    });
   });
 
   it("reports columns and rows it cannot use", () => {
