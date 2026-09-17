@@ -1,21 +1,24 @@
 #!/usr/bin/env python3
 """Build the bundled population allele-frequency JSON files.
 
-Run once whenever a source changes; the generated JSON is committed.
+Run whenever a source changes; the generated JSON is committed.
 
-    python3 -m venv .venv && .venv/bin/pip install openpyxl rdata
+    # Mexican tables only (standard library, no dependencies):
+    python3 scripts/build_population_data.py --out src/data/populations
+
+    # Everything, including the U.S. and U.K. reference sets:
+    python3 -m venv .venv && .venv/bin/pip install rdata
     curl -LO https://cran.r-project.org/src/contrib/forensicpopdata_1.0.4.tar.gz
     tar -xzf forensicpopdata_1.0.4.tar.gz
     .venv/bin/python scripts/build_population_data.py \
-        --workbook "reference/<laboratory workbook>.xlsx" \
-        --rda-dir forensicpopdata/data \
-        --out src/data/populations
+        --rda-dir forensicpopdata/data --out src/data/populations
 
 Sources
 -------
-* Laboratory table: sheet "Hoja1" of the laboratory's Excel workbook. The
-  workbook itself is not distributed (reference/ is git-ignored): it may hold
-  case data. Only the population-level frequency table is extracted.
+* Mexico: `scripts/sources/*.csv`, transcriptions of published tables with the
+  values exactly as printed. Each was extracted from the publication's PDF by
+  word coordinates and then checked against statistics printed in the same
+  publication (see the notes attached to each population below).
 * NIST 1036, FBI 2015 and UK DNA-17: machine-readable transcriptions shipped in
   the R package `forensicpopdata` (M. Kruijver). The underlying raw data are
   public domain (NIST, FBI) or Open Government Licence v3 (UK Home Office).
@@ -26,104 +29,156 @@ alleles sampled at that locus (2N); it drives the 5/(2N) minimum frequency.
 from __future__ import annotations
 
 import argparse
+import csv
 import json
 import warnings
 from pathlib import Path
 
 warnings.filterwarnings("ignore")
 
+SOURCES = Path(__file__).parent / "sources"
+
 # --------------------------------------------------------------------------
-# Laboratory workbook (Hoja1)
+# Mexico: published tables, transcribed in scripts/sources/
 # --------------------------------------------------------------------------
 
-LOCUS_ALIASES = {"THO1": "TH01"}
 
-# The table states N = 300, but every frequency is a multiple of 1/270 and the
-# observed-heterozygosity row is a multiple of 1/135, so the sample behind the
-# numbers is 135 individuals (270 chromosomes).
-LAB_CHROMOSOMES = 270
-
-# 0.1 % is the workbook's placeholder for "allele not observed", not data.
-LAB_FILLER_PERCENT = 0.1
-
-# (locus, allele in workbook) -> allele it is moved to.
-# D13S317 "13.2" = 4.4 %: allele 13.2 is unobserved in NIST-Hispanic, FBI-SW
-# Hispanic and FBI-SE Hispanic, while allele 14 (5.7-6.1 % in all three) is
-# blank in the workbook. The value sits one row above where it belongs.
-LAB_CORRECTIONS = {("D13S317", "13.2"): "14"}
+def read_table(path: Path, scale: float) -> dict[str, dict[str, float]]:
+    """Alleles down, markers across. `scale` turns the printed unit into a proportion."""
+    with path.open(encoding="utf-8", newline="") as handle:
+        rows = list(csv.DictReader(handle))
+    loci: dict[str, dict[str, float]] = {name: {} for name in rows[0] if name != "Allele"}
+    for row in rows:
+        for locus, freqs in loci.items():
+            if row[locus]:
+                freqs[row["Allele"]] = round(float(row[locus]) * scale, 6)
+    return loci
 
 
-def canon_allele(value) -> str:
-    number = float(str(value).replace("*", "").replace(",", "."))
-    return str(int(number)) if number == int(number) else f"{number:g}"
+def with_size(loci: dict[str, dict[str, float]], chromosomes: int) -> dict[str, dict]:
+    return {
+        locus: {"chromosomes": chromosomes, "freqs": dict(sorted(freqs.items(), key=lambda kv: float(kv[0])))}
+        for locus, freqs in loci.items()
+    }
 
 
-def build_lab_population(workbook: Path) -> list[dict]:
-    import openpyxl
+def build_mexico(sources: Path) -> list[dict]:
+    # --- Central Mexico: Macias-Vega et al. 2013, Table 1, printed in percent.
+    centro = read_table(sources / "mx-centro-macias-vega-2013.csv", 0.01)
 
-    sheet = openpyxl.load_workbook(workbook, data_only=True)["Hoja1"]
-    loci: dict[str, dict] = {}
-    for col in range(2, 17):
-        name = str(sheet.cell(1, col).value).strip()
-        locus = LOCUS_ALIASES.get(name, name)
-        freqs: dict[str, float] = {}
-        for row in range(2, 44):
-            raw = sheet.cell(row, col).value
-            percent = float(str(raw).replace("*", ""))
-            if abs(percent - LAB_FILLER_PERCENT) < 1e-9:
-                continue
-            allele = canon_allele(sheet.cell(row, 1).value)
-            allele = LAB_CORRECTIONS.get((locus, allele), allele)
-            freqs[allele] = round(freqs.get(allele, 0.0) + percent / 100, 6)
-        ordered = dict(sorted(freqs.items(), key=lambda kv: float(kv[0])))
-        loci[locus] = {"chromosomes": LAB_CHROMOSOMES, "freqs": ordered}
+    # The printed table puts D13S317's 4.4 % on the row of allele 13.2 and leaves
+    # allele 14 blank. The authors flag every allele new to the population with a
+    # footnote and do not flag this one; 13.2 is unobserved at D13S317 in the NIST
+    # and FBI Hispanic sets, where allele 14 is 5.7-6.1 %. The value is one row
+    # too high in the typeset table.
+    centro["D13S317"]["14"] = centro["D13S317"].pop("13.2")
+
+    # The paper states 300 people, yet every printed frequency is a multiple of
+    # 1/270 (0.4, 0.7, 1.1 ... never the 0.2, 0.3, 0.5 that 600 chromosomes would
+    # give) and its observed-heterozygosity row is a multiple of 1/135. The smaller,
+    # more conservative size is used for the 5/(2N) floor.
+    centro_chromosomes = 270
+
+    # --- Yucatan Peninsula: DIMYGEN 2016, printed as proportions, 350 people.
+    yucatan = read_table(sources / "mx-yucatan-dimygen-2016.csv", 1.0)
 
     return [
         {
-            "id": "lab-mx-hoja1",
-            "group": "lab",
+            "id": "mx-centro-2013",
+            "group": "mexico",
             "name": {
-                "es": "México — tabla del laboratorio (Excel, Hoja1)",
-                "en": "Mexico — laboratory table (Excel, Hoja1)",
+                "es": "Centro de México (Macías-Vega et al., 2013)",
+                "en": "Central Mexico (Macías-Vega et al., 2013)",
             },
-            "individuals": LAB_CHROMOSOMES // 2,
+            "individuals": 300,
             "source": {
                 "citation": (
-                    "Tabla de frecuencias del libro de Excel del laboratorio (hoja «Hoja1»). "
-                    "El informe del libro declara como origen las frecuencias de población "
-                    "mexicana de la SLAGF [Rev Esp Med Legal 2013;39(2):48-53]; esa "
-                    "correspondencia no ha sido verificada."
+                    "Macías-Vega M, García-Flores JR, Miranda-González E, Páez-Rodríguez J. Datos "
+                    "genéticos poblacionales de 15 marcadores tipo «short tandem repeats» empleados "
+                    "en las pruebas de paternidad e identificación de individuos por genética forense "
+                    "en el área metropolitana de la región centro de México. Rev Esp Med Legal "
+                    "2013;39(2):48-53."
                 ),
-                "license": "Datos del laboratorio",
+                "url": "https://doi.org/10.1016/j.reml.2012.11.004",
+                "license": "Published article, all rights reserved; only the frequency values are reproduced, with citation",
             },
             "notes": {
                 "es": [
-                    "Tamaño muestral: la tabla indica N = 300, pero todas las frecuencias son "
-                    "múltiplos de 1/270 y la fila de heterocigosidad observada lo es de 1/135. "
-                    "Se usa 2N = 270 cromosomas (135 individuos).",
-                    "Los valores de relleno de 0.1 % (alelos no observados) se eliminaron; en "
-                    "su lugar se aplica la frecuencia alélica mínima configurada.",
-                    "Corrección: D13S317 4.4 % estaba en la fila del alelo 13.2; se reasignó "
-                    "al alelo 14 (13.2 no se observa en ninguna referencia hispana y el 14, "
-                    "con ~6 %, estaba vacío).",
-                    "Pendiente de verificar contra la fuente: D18S51 alelo 13.2 = «1.1*» "
-                    "(guardado como texto) y D21S11 alelo 24.2 = 1.1 % (≈0.2 % en referencias).",
+                    "Población: 300 personas del área metropolitana del centro de México (Distrito "
+                    "Federal, Hidalgo, Puebla-Tlaxcala, Morelos, Toluca y Querétaro), kit Identifiler. "
+                    "Los propios autores señalan que difiere notablemente de las poblaciones del norte "
+                    "del país.",
+                    "Tamaño muestral: el artículo indica 300 personas, pero todas las frecuencias "
+                    "impresas son múltiplos de 1/270 y la heterocigosidad observada lo es de 1/135. "
+                    "Para la frecuencia mínima se usan 270 cromosomas, el valor más conservador.",
+                    "Corrección: la tabla publicada imprime el 4.4 % de D13S317 en la fila del alelo "
+                    "13.2 y deja vacío el 14. Los autores no lo marcan como alelo nuevo, el 13.2 no se "
+                    "observa en las referencias hispanas y el 14 ronda el 6 % en ellas. Se asignó al "
+                    "alelo 14.",
+                    "La tabla publicada da p = 0.000 (D18S51), 0.002 (vWA) y 0.005 (TPOX) para el "
+                    "equilibrio de Hardy-Weinberg, aunque el texto afirma que todos los marcadores "
+                    "están en equilibrio.",
                 ],
                 "en": [
-                    "Sample size: the table states N = 300, but every frequency is a multiple of "
-                    "1/270 and the observed-heterozygosity row is a multiple of 1/135. "
-                    "2N = 270 chromosomes (135 individuals) is used.",
-                    "The 0.1 % filler values (unobserved alleles) were removed; the configured "
-                    "minimum allele frequency is applied instead.",
-                    "Correction: D13S317 4.4 % sat on the allele 13.2 row; it was reassigned to "
-                    "allele 14 (13.2 is unobserved in every Hispanic reference and 14, at ~6 %, "
-                    "was blank).",
-                    "To verify against the source: D18S51 allele 13.2 = “1.1*” (stored as text) "
-                    "and D21S11 allele 24.2 = 1.1 % (≈0.2 % in references).",
+                    "Population: 300 people from the metropolitan area of central Mexico (Federal "
+                    "District, Hidalgo, Puebla-Tlaxcala, Morelos, Toluca and Querétaro), Identifiler "
+                    "kit. The authors themselves note that it differs markedly from the populations "
+                    "of northern Mexico.",
+                    "Sample size: the article states 300 people, but every printed frequency is a "
+                    "multiple of 1/270 and the observed heterozygosity is a multiple of 1/135. 270 "
+                    "chromosomes, the more conservative figure, are used for the minimum frequency.",
+                    "Correction: the published table prints D13S317's 4.4 % on the row of allele 13.2 "
+                    "and leaves 14 blank. The authors do not flag it as a new allele, 13.2 is "
+                    "unobserved in the Hispanic references and 14 is about 6 % in them. It was "
+                    "assigned to allele 14.",
+                    "The published table gives p = 0.000 (D18S51), 0.002 (vWA) and 0.005 (TPOX) for "
+                    "Hardy-Weinberg equilibrium, although the text says every marker is in "
+                    "equilibrium.",
                 ],
             },
-            "loci": loci,
-        }
+            "loci": with_size(centro, centro_chromosomes),
+        },
+        {
+            "id": "mx-yucatan-2016",
+            "group": "mexico",
+            "name": {
+                "es": "Península de Yucatán (DIMYGEN, 2016)",
+                "en": "Yucatán Peninsula (DIMYGEN, 2016)",
+            },
+            "individuals": 350,
+            "source": {
+                "citation": (
+                    "Sosa-Escalante J, López-González M, González-Herrera L. An update to the allele "
+                    "frequencies and forensic parameters for 15 autosomal STR in a population from "
+                    "Southeastern, Mexico. DIMYGEN Laboratorio; 2016."
+                ),
+                "url": "https://dimygen.com/frecuencias-alelicas.pdf",
+                "license": "Published by DIMYGEN Laboratorio without an explicit licence; only the frequency values are reproduced, with citation",
+            },
+            "notes": {
+                "es": [
+                    "Población: 350 personas no emparentadas de los tres estados de la Península de "
+                    "Yucatán.",
+                    "Marcadores del kit PowerPlex 16: incluye Penta D y Penta E, pero no D2S1338 ni "
+                    "D19S433. Con Identifiler esos dos marcadores quedan fuera del cálculo.",
+                    "Transcripción verificada: el contenido de información polimórfica (PIC) "
+                    "recalculado a partir de estas frecuencias coincide con el publicado en los 15 "
+                    "marcadores.",
+                    "Valores tal como se publicaron: D8S1179 suma 0.9967, y dos frecuencias aparecen "
+                    "con tres decimales (D13S317 alelo 14 = 0.061; D8S1179 alelo 10 = 0.071).",
+                ],
+                "en": [
+                    "Population: 350 unrelated people from the three states of the Yucatán Peninsula.",
+                    "PowerPlex 16 markers: it includes Penta D and Penta E, but not D2S1338 or "
+                    "D19S433. With Identifiler those two markers are left out of the calculation.",
+                    "Transcription checked: the polymorphic information content (PIC) recomputed from "
+                    "these frequencies matches the published figure for all 15 markers.",
+                    "Values as published: D8S1179 sums to 0.9967, and two frequencies are printed to "
+                    "three decimals (D13S317 allele 14 = 0.061; D8S1179 allele 10 = 0.071).",
+                ],
+            },
+            "loci": with_size(yucatan, 700),
+        },
     ]
 
 
@@ -258,18 +313,18 @@ def build_group(data: dict, table: dict, group: str, source: dict) -> list[dict]
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawTextHelpFormatter)
-    parser.add_argument("--workbook", type=Path, required=True)
-    parser.add_argument("--rda-dir", type=Path, required=True)
+    parser.add_argument("--sources", type=Path, default=SOURCES, help="folder with the transcribed CSV tables")
+    parser.add_argument("--rda-dir", type=Path, help="forensicpopdata/data; omit to rebuild the Mexican tables only")
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args()
     args.out.mkdir(parents=True, exist_ok=True)
 
-    groups = {
-        "lab": build_lab_population(args.workbook),
-        "nist1036": build_group(load_rda(args.rda_dir / "NIST1036freqs.rda"), NIST, "nist1036", NIST_SOURCE),
-        "fbi2015": build_group(load_rda(args.rda_dir / "FBI2015freqs.rda"), FBI, "fbi2015", FBI_SOURCE),
-        "ukdna17": build_group(load_rda(args.rda_dir / "UKDNA17freqs.rda"), UK, "ukdna17", UK_SOURCE),
-    }
+    groups = {"mexico": build_mexico(args.sources)}
+    if args.rda_dir:
+        groups["nist1036"] = build_group(load_rda(args.rda_dir / "NIST1036freqs.rda"), NIST, "nist1036", NIST_SOURCE)
+        groups["fbi2015"] = build_group(load_rda(args.rda_dir / "FBI2015freqs.rda"), FBI, "fbi2015", FBI_SOURCE)
+        groups["ukdna17"] = build_group(load_rda(args.rda_dir / "UKDNA17freqs.rda"), UK, "ukdna17", UK_SOURCE)
+
     for name, populations in groups.items():
         target = args.out / f"{name}.json"
         target.write_text(json.dumps(populations, ensure_ascii=False, separators=(",", ":")) + "\n")

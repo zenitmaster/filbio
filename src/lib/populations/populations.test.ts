@@ -1,11 +1,17 @@
 import { describe, expect, it } from "vitest";
-import { canonicalLocus, KITS, LOCI, lociOfKit, parseAllele } from "@/lib/genetics";
-import { BUILTIN_POPULATIONS, DEFAULT_POPULATION_ID, findPopulation, POPULATION_GROUPS } from "./index";
+import { canonicalLocus, KITS, LOCI, lociOfKit, normalizedFrequencies, parseAllele } from "@/lib/genetics";
+import {
+  BUILTIN_POPULATIONS,
+  DEFAULT_POPULATION_ID,
+  findPopulation,
+  POPULATION_GROUPS,
+  RENAMED_POPULATIONS,
+} from "./index";
 
 describe("bundled populations", () => {
-  it("ships the laboratory table plus the three public reference sets", () => {
+  it("ships two Mexican tables plus the three public reference sets", () => {
     const count = (group: string) => BUILTIN_POPULATIONS.filter((p) => p.group === group).length;
-    expect(count("lab")).toBe(1);
+    expect(count("mexico")).toBe(2);
     expect(count("nist1036")).toBe(4);
     expect(count("fbi2015")).toBe(11);
     expect(count("ukdna17")).toBe(4);
@@ -37,8 +43,9 @@ describe("bundled populations", () => {
           expect(value).toBeLessThanOrEqual(1);
         }
         const total = values.reduce((sum, value) => sum + value, 0);
-        // The laboratory table is rounded to 0.1 %, so allow for that.
-        expect(Math.abs(total - 1), `${locus} sums to ${total}`).toBeLessThan(0.003);
+        // Published tables are rounded (central Mexico to 0.1 %), and the Yucatán
+        // table's D8S1179 column adds up to 0.9967 as printed.
+        expect(Math.abs(total - 1), `${locus} sums to ${total}`).toBeLessThan(0.005);
       }
     });
 
@@ -55,28 +62,64 @@ describe("bundled populations", () => {
   });
 });
 
-describe("laboratory table (workbook Hoja1)", () => {
-  const lab = findPopulation(DEFAULT_POPULATION_ID);
+describe("central Mexico (Macías-Vega et al., 2013)", () => {
+  const centro = findPopulation(DEFAULT_POPULATION_ID);
 
-  it("covers the fifteen Identifiler loci, with TH01 spelled correctly", () => {
-    expect(Object.keys(lab.loci).sort()).toEqual([...lociOfKit(KITS[0])].sort());
-    expect(lab.loci.THO1).toBeUndefined();
+  it("is the default and covers the fifteen Identifiler markers", () => {
+    expect(centro.id).toBe("mx-centro-2013");
+    expect(Object.keys(centro.loci).sort()).toEqual([...lociOfKit(KITS[0])].sort());
   });
 
-  it("drops the 0.1 % fillers", () => {
-    for (const data of Object.values(lab.loci)) {
-      // The rarest real observation is 1/270 = 0.37 %.
+  it("still answers to the id it was first bundled under", () => {
+    expect(RENAMED_POPULATIONS["lab-mx-hoja1"]).toBe(centro.id);
+  });
+
+  it("holds observations only: the rarest is one chromosome in 270", () => {
+    for (const data of Object.values(centro.loci)) {
       for (const value of Object.values(data.freqs)) expect(value).toBeGreaterThan(0.003);
     }
   });
 
-  it("carries the D13S317 correction: 4.4 % belongs to allele 14, not 13.2", () => {
-    expect(lab.loci.D13S317.freqs["14"]).toBeCloseTo(0.044, 6);
-    expect(lab.loci.D13S317.freqs["13.2"]).toBeUndefined();
+  it("carries the D13S317 correction: the printed 4.4 % belongs to allele 14, not 13.2", () => {
+    expect(centro.loci.D13S317.freqs["14"]).toBeCloseTo(0.044, 6);
+    expect(centro.loci.D13S317.freqs["13.2"]).toBeUndefined();
   });
 
-  it("uses the sample size the data imply (135 people), not the stated 300", () => {
-    for (const data of Object.values(lab.loci)) expect(data.chromosomes).toBe(270);
+  it("uses the sample size the printed frequencies imply (270 chromosomes), not the stated 300 people", () => {
+    expect(centro.individuals).toBe(300);
+    for (const data of Object.values(centro.loci)) expect(data.chromosomes).toBe(270);
+  });
+});
+
+describe("Yucatán Peninsula (DIMYGEN, 2016)", () => {
+  const yucatan = findPopulation("mx-yucatan-2016");
+
+  it("covers the fifteen PowerPlex 16 markers, 350 people each", () => {
+    const powerplex16 = KITS.find((kit) => kit.id === "powerplex16");
+    expect(Object.keys(yucatan.loci).sort()).toEqual([...lociOfKit(powerplex16!)].sort());
+    for (const data of Object.values(yucatan.loci)) expect(data.chromosomes).toBe(700);
+  });
+
+  it("lacks the two Identifiler markers that PowerPlex 16 does not type", () => {
+    expect(yucatan.loci.D2S1338).toBeUndefined();
+    expect(yucatan.loci.D19S433).toBeUndefined();
+  });
+
+  it("reproduces the PIC the source prints for every marker", () => {
+    // Printed beside the frequencies in the source. A value transcribed into the
+    // wrong column or row would not survive this.
+    const published: Record<string, number> = {
+      D3S1358: 0.65, vWA: 0.72, "Penta D": 0.8, CSF1PO: 0.67, D16S539: 0.73, D7S820: 0.75,
+      D13S317: 0.8, D5S818: 0.65, "Penta E": 0.9, D18S51: 0.86, D21S11: 0.81, D8S1179: 0.76,
+      TPOX: 0.64, FGA: 0.86, TH01: 0.69,
+    };
+    for (const [locus, expected] of Object.entries(published)) {
+      const p = normalizedFrequencies(yucatan.loci[locus]);
+      const s2 = p.reduce((sum, x) => sum + x * x, 0);
+      const s4 = p.reduce((sum, x) => sum + x ** 4, 0);
+      const pic = 1 - s2 - (s2 * s2 - s4);
+      expect(Number(pic.toFixed(2)), locus).toBe(expected);
+    }
   });
 });
 

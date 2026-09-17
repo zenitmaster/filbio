@@ -7,9 +7,10 @@ import {
   DEFAULT_KIT_ID,
   DEFAULT_MIN_FREQUENCY,
   DEFAULT_MUTATION_MODEL,
+  SEX_MARKER,
   type Population,
 } from "@/lib/genetics";
-import { DEFAULT_POPULATION_ID } from "@/lib/populations";
+import { DEFAULT_POPULATION_ID, RENAMED_POPULATIONS } from "@/lib/populations";
 import { EXAMPLES, type ExampleId } from "./examples";
 import {
   emptyEntry,
@@ -66,6 +67,11 @@ interface AppState {
   setAmelogenin: (role: SubjectRole, index: 0 | 1, value: string) => void;
   /** Writes a rectangular block of cells in one update (paste from a spreadsheet). */
   setAlleles: (cells: Array<{ locus: string; role: SubjectRole; index: 0 | 1; value: string }>) => void;
+  /**
+   * Replaces the whole profile of each person given (every marker, amelogenin
+   * included), leaving the others untouched. Keys are markers, or SEX_MARKER.
+   */
+  importProfiles: (profiles: Partial<Record<SubjectRole, Record<string, [string, string]>>>) => void;
   clearCase: () => void;
   loadExample: (id: ExampleId) => void;
   replaceCase: (data: CaseData) => void;
@@ -136,6 +142,30 @@ export const useAppStore = create<AppState>()(
           return { caseData: { ...state.caseData, alleles } };
         }),
 
+      importProfiles: (profiles) =>
+        set((state) => {
+          const alleles = { ...state.caseData.alleles };
+          const amelogenin = { ...state.caseData.amelogenin };
+          for (const [role, profile] of Object.entries(profiles) as Array<[SubjectRole, Record<string, [string, string]>]>) {
+            // Clear first: a marker missing from the file must not keep an old value.
+            for (const locus of Object.keys(alleles)) alleles[locus] = { ...alleles[locus], [role]: ["", ""] };
+            amelogenin[role] = ["", ""];
+            for (const [marker, pair] of Object.entries(profile)) {
+              if (marker === SEX_MARKER) amelogenin[role] = [pair[0].toUpperCase(), pair[1].toUpperCase()];
+              else alleles[marker] = { ...(alleles[marker] ?? emptyEntry()), [role]: pair };
+            }
+          }
+          return {
+            caseData: {
+              ...state.caseData,
+              // A known parent only takes part in a trio.
+              mode: profiles.known ? "trio" : state.caseData.mode,
+              alleles,
+              amelogenin,
+            },
+          };
+        }),
+
       clearCase: () => set({ caseData: emptyCase() }),
 
       loadExample: (id) =>
@@ -196,6 +226,11 @@ export const useAppStore = create<AppState>()(
       // Settings gain fields over time; fill whatever an older save lacks.
       merge: (persisted, current) => {
         const saved = (persisted ?? {}) as Partial<AppState>;
+        // A bundled table that was renamed is still the same table.
+        const savedPopulation = saved.settings?.populationId;
+        if (saved.settings && savedPopulation && RENAMED_POPULATIONS[savedPopulation]) {
+          saved.settings = { ...saved.settings, populationId: RENAMED_POPULATIONS[savedPopulation] };
+        }
         return {
           ...current,
           ...saved,

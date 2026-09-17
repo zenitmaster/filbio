@@ -34,7 +34,7 @@ const PROFILE: Record<string, [string, string, string, string]> = {
   FGA: ["21", "25", "25", "23"],
 };
 
-const population = findPopulation("lab-mx-hoja1");
+const population = findPopulation("mx-centro-2013");
 const loci = Object.keys(PROFILE);
 const genotypes: Record<string, LocusGenotypes> = Object.fromEntries(
   Object.entries(PROFILE).map(([locus, [c1, c2, f1, f2]]) => [

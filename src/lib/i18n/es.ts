@@ -46,6 +46,31 @@ export const es = {
   "case.import.error": "El archivo no es un caso de FilBio válido.",
   "case.viewReport": "Ver informe",
 
+  "gm.open": "Importar de GeneMapper",
+  "gm.title": "Importar perfiles de GeneMapper",
+  "gm.intro":
+    "En GeneMapper ID o ID-X, abra la tabla de genotipos y use File ▸ Export Table para guardarla como texto delimitado por tabuladores (.txt) o como .csv. El archivo se lee en este navegador; no se envía a ningún servidor.",
+  "gm.file": "Elegir el archivo exportado",
+  "gm.paste": "o pegue aquí su contenido",
+  "gm.found": "{samples} muestras, {markers} marcadores.",
+  "gm.skipped": "No se usan: {markers}.",
+  "gm.assign": "¿Quién es quién?",
+  "gm.none": "No importar",
+  "gm.kit": "Los marcadores del archivo corresponden al kit {kit}.",
+  "gm.kit.switch": "Usar {kit}",
+  "gm.problem.noHeader":
+    "No parece una tabla de genotipos: falta una fila de encabezado con las columnas «Marker» y «Allele 1».",
+  "gm.problem.noRows": "La tabla no contiene muestras.",
+  "gm.problem.conflict": "{sample} tiene dos lecturas distintas de {marker}; se conserva la primera.",
+  "gm.warning.extraAlleles":
+    "{who}, {marker}: más de dos alelos ({alleles}). Se importan los dos primeros; revíselo.",
+  "gm.warning.offLadder":
+    "{who}, {marker}: «{alleles}» incluye una lectura que no es un alelo, como OL. Corríjala después de importar.",
+  "gm.warning.missing": "{who}: sin lectura en {markers}.",
+  "gm.duplicate": "La misma muestra está asignada a dos personas.",
+  "gm.replace": "Se reemplazará el perfil ya capturado de cada persona elegida.",
+  "gm.import": "Importar perfiles",
+
   "role.known.male": "Madre biológica",
   "role.alleged.male": "Presunto padre",
   "role.known.female": "Padre biológico",
@@ -73,7 +98,13 @@ export const es = {
 
   "grid.title": "Perfiles genéticos",
   "grid.help":
-    "Tab avanza por la fila; Enter y las flechas bajan por la columna. Puede pegar un bloque copiado de Excel. El orden de los dos alelos no importa.",
+    "Haga clic en una casilla para elegir un alelo de la tabla de la población, o escríbalo. Tab avanza por la fila y Enter baja por la columna. Puede pegar un bloque copiado de Excel. El orden de los dos alelos no importa.",
+  "grid.unlisted":
+    "El alelo {allele} no está en la tabla de esta población; se usará la frecuencia mínima. Compruebe que no sea un error de captura.",
+  "picker.other": "Otro alelo…",
+  "picker.custom": "Usar {allele}",
+  "picker.custom.hint": "no está en la tabla",
+  "picker.none": "Esta población no tiene alelos para {locus}. Escriba el valor.",
   "grid.marker": "Marcador",
   "grid.allele": "Alelo {n}",
   "grid.profile": "Perfil",
@@ -206,7 +237,7 @@ export const es = {
 
   "import.title": "Cargar una tabla de frecuencias",
   "import.body":
-    "Pegue la tabla tal como está en Excel, o elija un archivo CSV. La primera columna lleva el alelo y cada columna siguiente un marcador, como en la hoja «Hoja1» del libro del laboratorio.",
+    "Pegue la tabla tal como está en Excel, o elija un archivo CSV. La primera columna lleva el alelo y cada columna siguiente un marcador; las filas de estadísticos (N, He, PIC…) se ignoran.",
   "import.paste": "Tabla (pegue aquí desde Excel)",
   "import.file": "Elegir archivo CSV",
   "import.name": "Nombre de la población",
@@ -218,7 +249,7 @@ export const es = {
   "import.units.percent": "Porcentaje (28.5)",
   "import.units.proportion": "Proporción (0.285)",
   "import.filler": "Ignorar valores de relleno iguales a",
-  "import.filler.hint": "El libro del laboratorio usa 0.1 % para «no observado».",
+  "import.filler.hint": "Algunas hojas rellenan «no observado» con un valor fijo, como 0.1 %.",
   "import.preview": "Vista previa",
   "import.save": "Guardar población",
   "import.saved": "Población guardada",
