@@ -1,6 +1,7 @@
 "use client";
 
 import { CaseHeader } from "@/components/CaseHeader";
+import { GeneMapperImport } from "@/components/GeneMapperImport";
 import { GenotypeGrid } from "@/components/GenotypeGrid";
 import { DYE_VAR } from "@/components/LocusTrace";
 import { ResultPanel } from "@/components/ResultPanel";
@@ -21,15 +22,18 @@ export default function CasePage() {
         <Panel
           title={t("grid.title")}
           aside={
-            // Rows carry the colour of the dye channel they are read in.
-            <ul className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted">
-              {view.kit.panels.map((panel) => (
-                <li key={panel.label} className="flex items-center gap-1.5">
-                  <span className="h-3 w-[3px] rounded-full" style={{ backgroundColor: DYE_VAR[panel.dye] }} />
-                  {panel.label}
-                </li>
-              ))}
-            </ul>
+            <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+              {/* Rows carry the colour of the dye channel they are read in. */}
+              <ul className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted">
+                {view.kit.panels.map((panel) => (
+                  <li key={panel.label} className="flex items-center gap-1.5">
+                    <span className="h-3 w-[3px] rounded-full" style={{ backgroundColor: DYE_VAR[panel.dye] }} />
+                    {panel.label}
+                  </li>
+                ))}
+              </ul>
+              <GeneMapperImport />
+            </div>
           }
         >
           <p className="border-b border-line px-4 py-2.5 text-sm leading-snug text-muted">{t("grid.help")}</p>

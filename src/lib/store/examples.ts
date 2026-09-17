@@ -36,6 +36,9 @@ const CONSISTENT_TRIO: Record<string, Row> = {
   D18S51: ["14/17", "14/15", "15/16"],
   D5S818: ["11/12", "11/11", "11/13"],
   FGA: ["22/24", "21/24", "21/25"],
+  // Typed by the PowerPlex kits rather than Identifiler.
+  "Penta D": ["9/12", "12/13", "10/13"],
+  "Penta E": ["7/12", "12/15", "15/17"],
 };
 
 const base = {

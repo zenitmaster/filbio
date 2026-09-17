@@ -5,6 +5,7 @@ import {
   formatFrequency,
   formatIndex,
   formatRate,
+  parseAllele,
   repeatLengthOf,
   type LocusNote,
   type LocusResult,
@@ -13,11 +14,12 @@ import { plural, roleCode, roleLabel, useLocale, useT, type Translate } from "@/
 import { useAppStore, type SubjectRole } from "@/lib/store";
 import type { ParsedEntry } from "@/lib/store/parse";
 import type { CaseView } from "@/lib/store/useCaseResult";
+import { SEX_MARKER, useAllelePicker, type PickerCell } from "./AllelePicker";
 import { FormulaView } from "./FormulaView";
 import { DYE_VAR, LocusTrace, type TraceLane } from "./LocusTrace";
 import { cn } from "./ui";
 
-const AMEL_ROW = "AMEL";
+const AMEL_ROW = SEX_MARKER;
 
 const CELL_INPUT =
   "h-8 w-13 rounded border bg-surface text-center text-sm text-ink " +
@@ -33,31 +35,53 @@ export function GenotypeGrid({ view }: { view: CaseView }) {
 
   const [open, setOpen] = useState<string | null>(null);
 
-  const { kit, loci, byLocus, parsed } = view;
+  const { kit, loci, byLocus, parsed, population } = view;
   const roles: SubjectRole[] = caseData.mode === "trio" ? ["known", "child", "alleged"] : ["child", "alleged"];
   const rows = [...loci, AMEL_ROW];
   const columnCount = roles.length * 2;
   const indexLabel = t(`grid.index.${caseData.allegedSex}`);
 
-  // Both handlers sit on the table and work out the cell from the event target,
-  // so ninety inputs share two listeners.
-  const cellOf = (target: EventTarget): { input: HTMLInputElement; row: number; column: number } | null => {
+  const slotOf = (column: number) => ({ role: roles[Math.floor(column / 2)], index: (column % 2) as 0 | 1 });
+
+  // The dropdown of alleles behind every cell, fed by the selected population.
+  const picker = useAllelePicker({
+    frequenciesOf: (locus) => population.loci[locus],
+    valueOf: ({ locus, column }) => {
+      const { role, index } = slotOf(column);
+      return locus === AMEL_ROW ? caseData.amelogenin[role][index] : (caseData.alleles[locus]?.[role][index] ?? "");
+    },
+    onPick: ({ locus, column }, value) => {
+      const { role, index } = slotOf(column);
+      if (locus === AMEL_ROW) setAmelogenin(role, index, value);
+      else setAllele(locus, role, index, value);
+    },
+  });
+
+  // The handlers sit on the table and work out the cell from the event target,
+  // so ninety inputs share a handful of listeners.
+  const cellOf = (target: EventTarget): (PickerCell & { input: HTMLInputElement }) | null => {
     if (!(target instanceof HTMLInputElement) || !target.dataset.cell) return null;
     const [row, column] = target.dataset.cell.split(":").map(Number);
-    return { input: target, row, column };
+    return { input: target, row, column, locus: rows[row] };
   };
 
   const onKeyDown = (event: KeyboardEvent<HTMLTableElement>) => {
     const cell = cellOf(event.target);
     if (!cell) return;
     const { input, row, column } = cell;
+
+    // While the list is open it owns the arrow keys, Enter and Escape.
+    const outcome = picker.handleKey(event, cell, input);
+    if (outcome === "handled") return;
+
     const atStart = input.selectionStart === 0 && input.selectionEnd === 0;
     const atEnd = input.selectionStart === input.value.length;
     const everythingSelected =
       input.value.length > 0 && input.selectionStart === 0 && input.selectionEnd === input.value.length;
 
     let target: [number, number] | null = null;
-    if (event.key === "Enter") target = [row + (event.shiftKey ? -1 : 1), column];
+    if (outcome === "moveDown") target = [row + 1, column];
+    else if (event.key === "Enter") target = [row + (event.shiftKey ? -1 : 1), column];
     else if (event.key === "ArrowDown") target = [row + 1, column];
     else if (event.key === "ArrowUp") target = [row - 1, column];
     else if (event.key === "ArrowRight" && (atEnd || everythingSelected)) target = [row, column + 1];
@@ -98,7 +122,23 @@ export function GenotypeGrid({ view }: { view: CaseView }) {
     // `relative` makes this the containing block of the table's visually hidden
     // labels; otherwise they escape the scroller and widen the whole page.
     <div className="relative overflow-x-auto">
-      <table onKeyDown={onKeyDown} onPaste={onPaste} className="w-full border-collapse text-sm">
+      <table
+        onKeyDown={onKeyDown}
+        onPaste={onPaste}
+        // A click opens the list of alleles (or closes it again); typing narrows it.
+        onClick={(event) => {
+          const cell = cellOf(event.target);
+          if (!cell) return;
+          if (picker.isOpenFor(cell)) picker.close();
+          else picker.open(cell, cell.input, "");
+        }}
+        onChange={(event) => {
+          const cell = cellOf(event.target);
+          if (cell) picker.open(cell, cell.input, cell.input.value);
+        }}
+        onBlur={(event) => picker.handleBlur(event.relatedTarget)}
+        className="w-full border-collapse text-sm"
+      >
         <thead>
           <tr className="border-b border-line text-left text-muted">
             <th scope="col" className="py-2 pr-3 pl-4 font-medium">
@@ -148,6 +188,12 @@ export function GenotypeGrid({ view }: { view: CaseView }) {
                         const column = roleIndex * 2 + index;
                         const invalid = entry[role].invalid[index];
                         const value = caseData.alleles[locus]?.[role][index] ?? "";
+                        // A real allele that this population's table does not list:
+                        // allowed, but worth a second look before it is believed.
+                        const typed = parseAllele(value);
+                        const table = population.loci[locus]?.freqs;
+                        const unlisted = typed.ok && table !== undefined && table[typed.allele] === undefined;
+                        const active = picker.isOpenFor({ row, column, locus });
                         return (
                           <td key={`${role}${index}`} className={cn("py-1", index === 0 ? "pr-0.5 pl-2" : "pr-2 pl-0.5")}>
                             <input
@@ -156,13 +202,29 @@ export function GenotypeGrid({ view }: { view: CaseView }) {
                               inputMode="decimal"
                               autoComplete="off"
                               spellCheck={false}
+                              role="combobox"
+                              aria-autocomplete="list"
+                              aria-haspopup="listbox"
+                              aria-expanded={active}
+                              aria-controls={active ? picker.listId : undefined}
+                              aria-activedescendant={active ? picker.activeOptionId : undefined}
                               aria-label={`${locus}, ${roleLabel(t, role, caseData.allegedSex)}, ${t("grid.allele", { n: index + 1 })}`}
                               aria-invalid={invalid || undefined}
-                              title={invalid ? t("grid.invalid", { value }) : undefined}
+                              title={
+                                invalid
+                                  ? t("grid.invalid", { value })
+                                  : unlisted
+                                    ? t("grid.unlisted", { allele: typed.allele })
+                                    : undefined
+                              }
                               onChange={(event) => setAllele(locus, role, index, event.target.value)}
                               className={cn(
                                 CELL_INPUT,
-                                invalid ? "border-invalid bg-invalid-soft" : "border-line-strong hover:border-muted",
+                                invalid
+                                  ? "border-invalid bg-invalid-soft"
+                                  : unlisted
+                                    ? "border-dashed border-attention bg-attention-soft"
+                                    : "border-line-strong hover:border-muted",
                               )}
                             />
                           </td>
@@ -236,6 +298,7 @@ export function GenotypeGrid({ view }: { view: CaseView }) {
                 const column = roleIndex * 2 + index;
                 const value = caseData.amelogenin[role][index];
                 const invalid = value.trim() !== "" && !/^[XY]$/i.test(value.trim());
+                const active = picker.isOpenFor({ row: rows.length - 1, column, locus: AMEL_ROW });
                 return (
                   <td key={`${role}${index}`} className={cn("py-1", index === 0 ? "pr-0.5 pl-2" : "pr-2 pl-0.5")}>
                     <input
@@ -244,6 +307,12 @@ export function GenotypeGrid({ view }: { view: CaseView }) {
                       maxLength={1}
                       autoComplete="off"
                       spellCheck={false}
+                      role="combobox"
+                      aria-autocomplete="list"
+                      aria-haspopup="listbox"
+                      aria-expanded={active}
+                      aria-controls={active ? picker.listId : undefined}
+                      aria-activedescendant={active ? picker.activeOptionId : undefined}
                       aria-label={`${t("grid.amelogenin")}, ${roleLabel(t, role, caseData.allegedSex)}, ${index + 1}`}
                       aria-invalid={invalid || undefined}
                       title={invalid ? t("grid.invalidSex") : undefined}
@@ -263,6 +332,8 @@ export function GenotypeGrid({ view }: { view: CaseView }) {
           </tr>
         </tbody>
       </table>
+      {/* Positioned against the viewport, so the scroller above does not clip it. */}
+      {picker.popup}
     </div>
   );
 }

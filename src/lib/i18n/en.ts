@@ -48,6 +48,31 @@ export const en: Record<MessageKey, string> = {
   "case.import.error": "That file is not a valid FilBio case.",
   "case.viewReport": "View report",
 
+  "gm.open": "Import from GeneMapper",
+  "gm.title": "Import profiles from GeneMapper",
+  "gm.intro":
+    "In GeneMapper ID or ID-X, open the Genotypes table and use File ▸ Export Table to save it as tab-delimited text (.txt) or as .csv. The file is read in this browser; it is not sent to any server.",
+  "gm.file": "Choose the exported file",
+  "gm.paste": "or paste its contents here",
+  "gm.found": "{samples} samples, {markers} markers.",
+  "gm.skipped": "Not used: {markers}.",
+  "gm.assign": "Who is who?",
+  "gm.none": "Do not import",
+  "gm.kit": "The file's markers match the {kit} kit.",
+  "gm.kit.switch": "Use {kit}",
+  "gm.problem.noHeader":
+    "This does not look like a genotype table: there is no header row with “Marker” and “Allele 1” columns.",
+  "gm.problem.noRows": "The table contains no samples.",
+  "gm.problem.conflict": "{sample} has two different calls for {marker}; the first is kept.",
+  "gm.warning.extraAlleles":
+    "{who}, {marker}: more than two alleles ({alleles}). The first two are imported; check it.",
+  "gm.warning.offLadder":
+    "{who}, {marker}: “{alleles}” includes a call that is not an allele, such as OL. Correct it after importing.",
+  "gm.warning.missing": "{who}: no call at {markers}.",
+  "gm.duplicate": "The same sample is assigned to two people.",
+  "gm.replace": "The profile already entered for each person chosen will be replaced.",
+  "gm.import": "Import profiles",
+
   "role.known.male": "Biological mother",
   "role.alleged.male": "Alleged father",
   "role.known.female": "Biological father",
@@ -75,7 +100,13 @@ export const en: Record<MessageKey, string> = {
 
   "grid.title": "Genetic profiles",
   "grid.help":
-    "Tab moves along the row; Enter and the arrow keys move down the column. You can paste a block copied from Excel. The order of the two alleles does not matter.",
+    "Click a cell to choose an allele from the population's table, or type it. Tab moves along the row and Enter moves down the column. You can paste a block copied from Excel. The order of the two alleles does not matter.",
+  "grid.unlisted":
+    "Allele {allele} is not in this population's table; the minimum frequency will be used. Check that it is not a typing error.",
+  "picker.other": "Another allele…",
+  "picker.custom": "Use {allele}",
+  "picker.custom.hint": "not in the table",
+  "picker.none": "This population has no alleles for {locus}. Type the value.",
   "grid.marker": "Marker",
   "grid.allele": "Allele {n}",
   "grid.profile": "Profile",
@@ -208,7 +239,7 @@ export const en: Record<MessageKey, string> = {
 
   "import.title": "Load a frequency table",
   "import.body":
-    "Paste the table as it is in Excel, or choose a CSV file. The first column holds the allele and each following column a marker, as in the “Hoja1” sheet of the laboratory workbook.",
+    "Paste the table as it is in Excel, or choose a CSV file. The first column holds the allele and each following column a marker; rows of statistics (N, He, PIC…) are ignored.",
   "import.paste": "Table (paste here from Excel)",
   "import.file": "Choose a CSV file",
   "import.name": "Population name",
@@ -220,7 +251,7 @@ export const en: Record<MessageKey, string> = {
   "import.units.percent": "Percent (28.5)",
   "import.units.proportion": "Proportion (0.285)",
   "import.filler": "Ignore filler values equal to",
-  "import.filler.hint": "The laboratory workbook uses 0.1 % for “not observed”.",
+  "import.filler.hint": "Some sheets fill “not observed” with a fixed value such as 0.1 %.",
   "import.preview": "Preview",
   "import.save": "Save population",
   "import.saved": "Population saved",

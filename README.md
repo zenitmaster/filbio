@@ -17,7 +17,7 @@ profiles never leave the browser they are typed into.**
 
 - **Trio and duo** cases, for paternity or maternity, with the textbook likelihood-ratio
   formulas chosen from the genotypes (the order the two alleles are typed in is irrelevant).
-- **Reference populations**: 20 bundled tables (see [Data](#data)), plus your own, pasted
+- **Reference populations**: 21 bundled tables (see [Data](#data)), plus your own, pasted
   straight from Excel or loaded from CSV, then editable cell by cell and exportable.
 - **Minimum allele frequency** of 5/(2N) per table, so a rare or unobserved allele cannot
   inflate the result.
@@ -32,6 +32,13 @@ profiles never leave the browser they are typed into.**
   recorded sex, alleles absent from the population table.
 - Kits: Identifiler, GlobalFiler, PowerPlex 16 / 21 / Fusion, NGM SElect. Markers are
   grouped by dye channel, in the order they are read off the electropherogram.
+- **Allele dropdowns**: each cell lists the alleles the selected population has for that
+  marker, with their frequencies. Any other allele can still be typed; it is accepted as a
+  custom value and flagged, which catches typing errors.
+- **Import from Applied Biosystems GeneMapper ID / ID-X**: load the exported genotype table
+  (File ▸ Export Table), and the samples are matched to mother, child and alleged father from
+  their names. The kit is recognised from the markers; off-ladder calls and markers with more
+  than two alleles are pointed out.
 - Spreadsheet-style entry: arrow keys, Enter to move down a column, paste a block from Excel.
 - Spanish and English, light and dark, printable report, cases saved to and opened from a file.
 
@@ -73,11 +80,12 @@ npm run build      # static site in out/
 | --- | --- |
 | `src/lib/genetics/` | The engine: alleles, frequencies, mutation model, per-marker index, case verdict, number formatting. Pure TypeScript, no UI. |
 | `src/lib/populations/` | Bundled population registry and the spreadsheet importer. |
+| `src/lib/import/` | Reader for GeneMapper genotype-table exports. |
 | `src/lib/store/` | Case and settings state, persisted in the browser. |
 | `src/lib/report/` | Report wording, Spanish and English. |
 | `src/components/`, `src/app/` | Interface. |
 | `src/data/populations/` | Generated frequency tables (JSON). |
-| `scripts/build_population_data.py` | Regenerates those tables from their sources. |
+| `scripts/build_population_data.py`, `scripts/sources/` | Regenerates those tables; the CSV files are transcriptions of published tables. |
 
 ### How the engine is tested
 
@@ -92,7 +100,8 @@ independently in Python.
 
 | Group | Populations | Markers | Source | Licence |
 | --- | --- | --- | --- | --- |
-| Laboratory | Mexico (laboratory table) | 15 | A laboratory's working table; stated origin SLAGF, *Rev Esp Med Legal* 2013;39(2):48-53, **not yet verified against that source** | Laboratory data |
+| Mexico | Central Mexico, metropolitan area (default) | 15 (Identifiler) | Macías-Vega et al., *Rev Esp Med Legal* 2013;39(2):48-53, [doi](https://doi.org/10.1016/j.reml.2012.11.004) | Published article; frequency values reproduced with citation |
+| Mexico | Yucatán Peninsula | 15 (PowerPlex 16) | Sosa-Escalante, López-González & González-Herrera, [DIMYGEN 2016](https://dimygen.com/frecuencias-alelicas.pdf) | No explicit licence; frequency values reproduced with citation |
 | NIST 1036 | African American, Asian, Caucasian, Hispanic (U.S.) | 29 | Hill et al., *FSI Genet* 2013;7:e82; Steffen et al., 2017;31:e36 | Public domain |
 | FBI 2015 | 11 U.S. and Caribbean populations, incl. SW and SE Hispanic | 23 | Moretti et al., *FSI Genet* 2016;25:175 | Public domain |
 | UK DNA-17 | White, Black African & Caribbean, Indian subcontinent, Chinese | 16 | UK Home Office | OGL v3.0 |
@@ -101,10 +110,16 @@ The NIST, FBI and UK tables were read from the machine-readable transcriptions i
 package [`forensicpopdata`](https://cran.r-project.org/package=forensicpopdata) (M. Kruijver).
 Mutation rates are the AABB 2003 figures as tabulated by NIST STRBase.
 
-The laboratory table carries notes, shown in the app, about its sample size, one corrected
-transcription error and two values still to be verified. **Verify any table against its
-published source before reporting casework with it**, and choose the population that
-represents the people in the case.
+The Mexican tables are transcriptions of the published tables, kept as CSV in
+`scripts/sources/` with the values exactly as printed. Each was extracted from the
+publication's PDF by word coordinates and checked against statistics printed in the same
+source: the Yucatán transcription reproduces the published PIC of all 15 markers. Both carry
+notes, shown in the app, about what was found along the way, including one row-alignment
+error in the central Mexico table as typeset, which is corrected and documented.
+
+**Choose the population that represents the people in the case.** Allele frequencies differ
+between regions of Mexico; the authors of the central Mexico table say so explicitly about
+the north of the country.
 
 ## Scope
 

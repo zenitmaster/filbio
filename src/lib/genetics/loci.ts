@@ -5,6 +5,9 @@
 
 export type LocusId = string;
 
+/** Amelogenin: typed with every kit as a sex and sample-identity check, never part of the index. */
+export const SEX_MARKER = "AMEL";
+
 export interface MutationRates {
   /** Probability per meiosis that the father transmits a mutated allele. */
   paternal: number;
@@ -60,8 +63,7 @@ export function repeatLengthOf(locus: LocusId): number {
 
 /**
  * Apparent mutation rates observed in paternity testing, AABB Annual Report
- * 2003 as tabulated by NIST STRBase. These are the values carried in rows
- * "Mut M" / "Mut H" of the laboratory workbook, converted from percent.
+ * 2003 as tabulated by NIST STRBase, converted from percent.
  */
 export const AABB_MUTATION_RATES: Record<LocusId, MutationRates> = {
   D8S1179: { maternal: 0.0002, paternal: 0.0016 },
