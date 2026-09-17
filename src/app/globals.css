@@ -1,0 +1,141 @@
+@import "tailwindcss";
+
+/* Dark mode follows a class on <html>, set before paint by the theme script. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
+ * Runtime colour values. The interface itself is ink on cool paper; colour is
+ * kept for the data (the dye channel a locus is read in) and for the result.
+ */
+:root {
+  --paper: #f6f8f7;
+  --surface: #ffffff;
+  --sunken: #edf1ef;
+  --ink: #15302b;
+  --text: #2a3f3a;
+  --muted: #5b6b67;
+  --faint: #8a9995;
+  --line: #d8e0dd;
+  --line-strong: #b7c4c0;
+  --focus: #6a55e0;
+
+  /* Electropherogram dye channels */
+  --dye-blue: #2f6fde;
+  --dye-green: #1e9e57;
+  --dye-yellow: #b9830a;
+  --dye-red: #d4483b;
+  --dye-purple: #8a5cf0;
+
+  /*
+   * Result states. Inclusion and exclusion are both ordinary, valid outcomes,
+   * so neither borrows the good/bad connotation of green and red; amber is
+   * reserved for what actually needs the analyst's attention.
+   */
+  --included: #0e6b5c;
+  --included-soft: #dff1ec;
+  --excluded: #5b3a8c;
+  --excluded-soft: #ece4f6;
+  --attention: #8a5a00;
+  --attention-soft: #fbf0d9;
+  --invalid: #b3261e;
+  --invalid-soft: #fbe9e7;
+}
+
+.dark {
+  --paper: #0f1a18;
+  --surface: #16231f;
+  --sunken: #1c2b27;
+  --ink: #e8f0ed;
+  --text: #cfdad6;
+  --muted: #95a6a1;
+  --faint: #6e807b;
+  --line: #2a3b36;
+  --line-strong: #3d524c;
+  --focus: #9d8cff;
+
+  --dye-blue: #6ea0ff;
+  --dye-green: #4fcb86;
+  --dye-yellow: #e6b53c;
+  --dye-red: #ff7a6b;
+  --dye-purple: #b294ff;
+
+  --included: #5fd0b8;
+  --included-soft: #12352e;
+  --excluded: #c3a3f0;
+  --excluded-soft: #2a2140;
+  --attention: #f0c064;
+  --attention-soft: #3a2e12;
+  --invalid: #ff8a80;
+  --invalid-soft: #3d1b18;
+}
+
+@theme inline {
+  --color-paper: var(--paper);
+  --color-surface: var(--surface);
+  --color-sunken: var(--sunken);
+  --color-ink: var(--ink);
+  --color-text: var(--text);
+  --color-muted: var(--muted);
+  --color-faint: var(--faint);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-focus: var(--focus);
+
+  --color-dye-blue: var(--dye-blue);
+  --color-dye-green: var(--dye-green);
+  --color-dye-yellow: var(--dye-yellow);
+  --color-dye-red: var(--dye-red);
+  --color-dye-purple: var(--dye-purple);
+
+  --color-included: var(--included);
+  --color-included-soft: var(--included-soft);
+  --color-excluded: var(--excluded);
+  --color-excluded-soft: var(--excluded-soft);
+  --color-attention: var(--attention);
+  --color-attention-soft: var(--attention-soft);
+  --color-invalid: var(--invalid);
+  --color-invalid-soft: var(--invalid-soft);
+
+  /* Source Sans 3 operates the instrument; STIX Two sets the science and the record. */
+  --font-sans: var(--font-source-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-stix), "STIX Two Text", "Times New Roman", serif;
+}
+
+@layer base {
+  html {
+    color-scheme: light;
+    -webkit-text-size-adjust: 100%;
+  }
+  html.dark {
+    color-scheme: dark;
+  }
+  body {
+    background-color: var(--paper);
+    color: var(--text);
+    font-family: var(--font-sans);
+    /* Every figure here is compared down a column, and 0 must never read as O. */
+    font-variant-numeric: tabular-nums slashed-zero;
+  }
+  :focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+  }
+}
+
+/* Inline mathematics: upright operators, italic variables, as in a journal. */
+@utility math {
+  font-family: var(--font-serif);
+  font-variant-numeric: lining-nums;
+  white-space: nowrap;
+}
+
+@media print {
+  @page {
+    size: letter;
+    margin: 18mm 18mm 20mm;
+  }
+  body {
+    background: #fff;
+    color: #000;
+  }
+}
