@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { canonicalLocus, KITS, LOCI, lociOfKit, normalizedFrequencies, parseAllele } from "@/lib/genetics";
+import { canonicalLocus, DEFAULT_KIT_ID, kitById, KITS, LOCI, lociOfKit, normalizedFrequencies, parseAllele } from "@/lib/genetics";
 import {
   BUILTIN_POPULATIONS,
   DEFAULT_POPULATION_ID,
@@ -62,12 +62,44 @@ describe("bundled populations", () => {
   });
 });
 
-describe("central Mexico (Macías-Vega et al., 2013)", () => {
-  const centro = findPopulation(DEFAULT_POPULATION_ID);
+describe("defaults and order, for a laboratory in the United States", () => {
+  it("opens on NIST Caucasian, which is also what an unknown id falls back to", () => {
+    expect(DEFAULT_POPULATION_ID).toBe("nist-cauc");
+    expect(BUILTIN_POPULATIONS[0].id).toBe(DEFAULT_POPULATION_ID);
+  });
 
-  it("is the default and covers the fifteen Identifiler markers", () => {
+  it("has frequencies for every marker of every kit, so a first visit shows no gaps", () => {
+    const covered = findPopulation(DEFAULT_POPULATION_ID).loci;
+    for (const kit of KITS) {
+      expect(lociOfKit(kit).filter((locus) => !covered[locus]), kit.id).toEqual([]);
+    }
+  });
+
+  it("lists the United States sets before the others, a laboratory's own tables first of all", () => {
+    expect(POPULATION_GROUPS.map((group) => group.id)).toEqual(["custom", "nist1036", "fbi2015", "mexico", "ukdna17"]);
+    const groupsInOrder = [...new Set(BUILTIN_POPULATIONS.map((population) => population.group))];
+    expect(groupsInOrder).toEqual(["nist1036", "fbi2015", "mexico", "ukdna17"]);
+  });
+
+  it("orders each United States set by share of the population", () => {
+    const ids = (group: string) => BUILTIN_POPULATIONS.filter((p) => p.group === group).map((p) => p.id);
+    expect(ids("nist1036")).toEqual(["nist-cauc", "nist-hisp", "nist-afam", "nist-asian"]);
+    expect(ids("fbi2015").slice(0, 4)).toEqual(["fbi-caucasian", "fbi-sw-hispanic", "fbi-se-hispanic", "fbi-african-american"]);
+    expect(ids("fbi2015")).toHaveLength(11);
+  });
+
+  it("opens on GlobalFiler, with the kits most used in the United States first", () => {
+    expect(DEFAULT_KIT_ID).toBe("globalfiler");
+    expect(KITS.map((kit) => kit.id)).toEqual(["globalfiler", "powerplexfusion", "identifiler", "powerplex21", "powerplex16", "ngmselect"]);
+  });
+});
+
+describe("central Mexico (Macías-Vega et al., 2013)", () => {
+  const centro = findPopulation("mx-centro-2013");
+
+  it("covers the fifteen Identifiler markers", () => {
     expect(centro.id).toBe("mx-centro-2013");
-    expect(Object.keys(centro.loci).sort()).toEqual([...lociOfKit(KITS[0])].sort());
+    expect(Object.keys(centro.loci).sort()).toEqual([...lociOfKit(kitById("identifiler"))].sort());
   });
 
   it("still answers to the id it was first bundled under", () => {

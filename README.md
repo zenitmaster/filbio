@@ -1,7 +1,7 @@
 # FilBio
 
-Cálculo de filiación biológica (paternidad y maternidad) a partir de marcadores STR.
-*Biological filiation (paternity and maternity) calculations from STR markers.*
+Biological filiation (paternity and maternity) calculations from STR markers.
+*Cálculo de filiación biológica (paternidad y maternidad) a partir de marcadores STR.*
 
 **Use it at [filbio.vercel.app](https://filbio.vercel.app).** Nothing to install, no account.
 
@@ -30,7 +30,7 @@ profiles never leave the browser they are typed into.**
 - Checks the analyst would otherwise do by eye: a known parent who does not fit the child
   (sample mix-up), opposite homozygotes (possible null allele), amelogenin against the
   recorded sex, alleles absent from the population table.
-- Kits: Identifiler, GlobalFiler, PowerPlex 16 / 21 / Fusion, NGM SElect. Markers are
+- Kits: GlobalFiler (the default), PowerPlex Fusion, Identifiler, PowerPlex 21 / 16, NGM SElect. Markers are
   grouped by dye channel, in the order they are read off the electropherogram.
 - **Allele dropdowns**: each cell lists the alleles the selected population has for that
   marker, with their frequencies. Any other allele can still be typed; it is accepted as a
@@ -47,7 +47,8 @@ profiles never leave the browser they are typed into.**
   already has alleles typed in, the import offers to empty them rather than let a person
   from an earlier case stay in the calculation.
 - Spreadsheet-style entry: arrow keys, Enter to move down a column, paste a block from Excel.
-- Spanish and English, light and dark, printable report, cases saved to and opened from a file.
+- English (the default) and Spanish, light and dark, printable report, cases saved to and
+  opened from a file.
 
 The method, with its formulas, limits and references, is documented inside the app under
 **Método / Method** (`src/app/metodo/page.tsx`).
@@ -107,10 +108,10 @@ independently in Python.
 
 | Group | Populations | Markers | Source | Licence |
 | --- | --- | --- | --- | --- |
-| Mexico | Central Mexico, metropolitan area (default) | 15 (Identifiler) | Macías-Vega et al., *Rev Esp Med Legal* 2013;39(2):48-53, [doi](https://doi.org/10.1016/j.reml.2012.11.004) | Published article; frequency values reproduced with citation |
-| Mexico | Yucatán Peninsula | 15 (PowerPlex 16) | Sosa-Escalante, López-González & González-Herrera, [DIMYGEN 2016](https://dimygen.com/frecuencias-alelicas.pdf) | No explicit licence; frequency values reproduced with citation |
-| NIST 1036 | African American, Asian, Caucasian, Hispanic (U.S.) | 29 | Hill et al., *FSI Genet* 2013;7:e82; Steffen et al., 2017;31:e36 | Public domain |
+| NIST 1036 | Caucasian (the default), Hispanic, African American, Asian (U.S.) | 29 | Hill et al., *FSI Genet* 2013;7:e82; Steffen et al., 2017;31:e36 | Public domain |
 | FBI 2015 | 11 U.S. and Caribbean populations, incl. SW and SE Hispanic | 23 | Moretti et al., *FSI Genet* 2016;25:175 | Public domain |
+| Mexico | Central Mexico, metropolitan area | 15 (Identifiler) | Macías-Vega et al., *Rev Esp Med Legal* 2013;39(2):48-53, [doi](https://doi.org/10.1016/j.reml.2012.11.004) | Published article; frequency values reproduced with citation |
+| Mexico | Yucatán Peninsula | 15 (PowerPlex 16) | Sosa-Escalante, López-González & González-Herrera, [DIMYGEN 2016](https://dimygen.com/frecuencias-alelicas.pdf) | No explicit licence; frequency values reproduced with citation |
 | UK DNA-17 | White, Black African & Caribbean, Indian subcontinent, Chinese | 16 | UK Home Office | OGL v3.0 |
 
 The NIST, FBI and UK tables were read from the machine-readable transcriptions in the R

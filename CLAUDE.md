@@ -30,8 +30,13 @@ with `output: "export"`, TypeScript, Tailwind CSS v4, Zustand, Vitest.
 
 ## Conventions
 
-- UI strings live in `src/lib/i18n/es.ts` (source of truth for keys) and `en.ts`. Spanish is
+- UI strings live in `src/lib/i18n/es.ts` (source of truth for keys) and `en.ts`. English is
   the default language. Counted messages come in `.one` / `.other` pairs, used via `plural()`.
+- Opening defaults target a laboratory in the United States: English, the GlobalFiler kit,
+  NIST Caucasian. The default population must cover every marker of every kit (tested).
+  Never migrate a visitor's saved kit or population: that would change their results
+  without their knowing. Changing the saved-state `version` requires a `migrate`, or the
+  saved case is discarded.
 - Colours are semantic tokens in `src/app/globals.css` (`bg-surface`, `text-ink`, ...).
   Inclusion and exclusion are deliberately not green/red: both are valid results. Amber
   (`attention`) is for what needs the analyst's eye. Dye colours are for data only.

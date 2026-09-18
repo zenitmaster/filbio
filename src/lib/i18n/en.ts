@@ -7,6 +7,7 @@ export const en: Record<MessageKey, string> = {
   "app.disclaimer":
     "A statistical calculation aid. It does not replace the validation, controls or judgement of the laboratory issuing the report.",
 
+  "nav.main": "Main",
   "nav.case": "Case",
   "nav.report": "Report",
   "nav.populations": "Populations",

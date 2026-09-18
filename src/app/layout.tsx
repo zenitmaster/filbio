@@ -19,9 +19,9 @@ const stix = STIX_Two_Text({
 });
 
 export const metadata: Metadata = {
-  title: { default: "FilBio · Filiación biológica", template: "%s · FilBio" },
+  title: { default: "FilBio · Paternity index calculator", template: "%s · FilBio" },
   description:
-    "Índice y probabilidad de paternidad a partir de marcadores STR, con la población de referencia que usted elija. Los perfiles nunca salen de su navegador.",
+    "Paternity and maternity index and probability from STR profiles, with the reference population of your choice. Profiles never leave your browser. También en español.",
   applicationName: "FilBio",
   robots: { index: true, follow: true },
 };
@@ -56,7 +56,7 @@ const THEME_SCRIPT = `try{var s=JSON.parse(localStorage.getItem("filbio:v1")||"{
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="es" className={`${sourceSans.variable} ${stix.variable}`} suppressHydrationWarning>
+    <html lang="en" className={`${sourceSans.variable} ${stix.variable}`} suppressHydrationWarning>
       <head>
         {process.env.NODE_ENV === "production" && (
           <meta httpEquiv="Content-Security-Policy" content={CONTENT_SECURITY_POLICY} />

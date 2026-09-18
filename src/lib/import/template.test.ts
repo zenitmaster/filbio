@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { KITS, lociOfKit } from "@/lib/genetics";
+import { kitById, lociOfKit } from "@/lib/genetics";
 import { csvField, parseDelimited } from "./csv";
 import { buildProfileTable, invalidCalls, parseProfileTable, roleOfHeader } from "./template";
 
@@ -111,7 +111,7 @@ describe("parseProfileTable", () => {
 });
 
 describe("buildProfileTable", () => {
-  const loci = lociOfKit(KITS[0]);
+  const loci = lociOfKit(kitById("identifiler"));
   const labels = { known: "Madre biológica", child: "Hijo(a)", alleged: "Presunto padre" };
 
   it("hands out a blank template for the kit, ready for Excel", () => {

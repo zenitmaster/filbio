@@ -41,8 +41,24 @@ export function emptyCase(): CaseData {
   };
 }
 
+/**
+ * Carries a state saved by an earlier release forward. Without this, a change of
+ * `version` would make the persistence layer throw the saved case away.
+ *
+ * Version 2 made English the default language. Until then the language on file
+ * was never a choice, only the old default written back, so it is reset once;
+ * anyone who prefers Spanish is one click away from it. The kit and population
+ * on file are deliberately left alone: changing the reference population under
+ * a laboratory's feet would silently change its results.
+ */
+export function migrateSavedState(persisted: unknown, version: number): unknown {
+  const saved = (persisted ?? {}) as { settings?: Partial<Settings> };
+  if (version < 2 && saved.settings) saved.settings = { ...saved.settings, locale: "en" };
+  return saved;
+}
+
 export const DEFAULT_SETTINGS: Settings = {
-  locale: "es",
+  locale: "en",
   theme: "system",
   kitId: DEFAULT_KIT_ID,
   populationId: DEFAULT_POPULATION_ID,
@@ -215,8 +231,10 @@ export const useAppStore = create<AppState>()(
         })),
     }),
     {
+      // The key is the storage slot and stays put; `version` is what moves.
       name: "filbio:v1",
-      version: 1,
+      version: 2,
+      migrate: migrateSavedState,
       storage: createJSONStorage(() => localStorage),
       // Read on the client after mount, so server and first client render agree.
       skipHydration: true,
