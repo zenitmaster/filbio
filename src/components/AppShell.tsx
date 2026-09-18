@@ -64,7 +64,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <span className="font-serif text-xl font-semibold tracking-tight">{t("app.name")}</span>
           </Link>
 
-          <nav aria-label="Principal" className="order-last -mx-1 flex w-full gap-0.5 overflow-x-auto sm:order-none sm:w-auto">
+          <nav aria-label={t("nav.main")} className="order-last -mx-1 flex w-full gap-0.5 overflow-x-auto sm:order-none sm:w-auto">
             {NAV.map((item) => {
               const active = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
               return (
@@ -85,7 +85,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
           <div className="ml-auto flex items-center gap-1.5">
             <div role="group" aria-label={t("nav.language")} className="flex rounded-md border border-line-strong p-0.5 text-sm">
-              {(["es", "en"] as const).map((locale) => (
+              {(["en", "es"] as const).map((locale) => (
                 <button
                   key={locale}
                   type="button"

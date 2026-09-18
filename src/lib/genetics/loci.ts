@@ -122,17 +122,12 @@ export interface Kit {
   panels: KitPanel[];
 }
 
+/**
+ * Listed with the kits most used in the United States first: the two that type
+ * the 20 expanded CODIS core loci, then the older 15-locus kits, then the
+ * European set.
+ */
 export const KITS: Kit[] = [
-  {
-    id: "identifiler",
-    name: "AmpFℓSTR Identifiler / Identifiler Plus",
-    panels: [
-      { dye: "blue", label: "6-FAM", loci: ["D8S1179", "D21S11", "D7S820", "CSF1PO"] },
-      { dye: "green", label: "VIC", loci: ["D3S1358", "TH01", "D13S317", "D16S539", "D2S1338"] },
-      { dye: "yellow", label: "NED", loci: ["D19S433", "vWA", "TPOX", "D18S51"] },
-      { dye: "red", label: "PET", loci: ["D5S818", "FGA"] },
-    ],
-  },
   {
     id: "globalfiler",
     name: "GlobalFiler",
@@ -145,12 +140,23 @@ export const KITS: Kit[] = [
     ],
   },
   {
-    id: "powerplex16",
-    name: "PowerPlex 16 / 16 HS",
+    id: "powerplexfusion",
+    name: "PowerPlex Fusion",
     panels: [
-      { dye: "blue", label: "Fluorescein", loci: ["D3S1358", "TH01", "D21S11", "D18S51", "Penta E"] },
-      { dye: "green", label: "JOE", loci: ["D5S818", "D13S317", "D7S820", "D16S539", "CSF1PO", "Penta D"] },
-      { dye: "yellow", label: "TMR", loci: ["vWA", "D8S1179", "TPOX", "FGA"] },
+      { dye: "blue", label: "Fluorescein", loci: ["D3S1358", "D1S1656", "D2S441", "D10S1248", "D13S317", "Penta E"] },
+      { dye: "green", label: "JOE", loci: ["D16S539", "D18S51", "D2S1338", "CSF1PO", "Penta D"] },
+      { dye: "yellow", label: "TMR-ET", loci: ["TH01", "vWA", "D21S11", "D7S820", "D5S818", "TPOX"] },
+      { dye: "red", label: "CXR-ET", loci: ["D8S1179", "D12S391", "D19S433", "FGA", "D22S1045"] },
+    ],
+  },
+  {
+    id: "identifiler",
+    name: "AmpFℓSTR Identifiler / Identifiler Plus",
+    panels: [
+      { dye: "blue", label: "6-FAM", loci: ["D8S1179", "D21S11", "D7S820", "CSF1PO"] },
+      { dye: "green", label: "VIC", loci: ["D3S1358", "TH01", "D13S317", "D16S539", "D2S1338"] },
+      { dye: "yellow", label: "NED", loci: ["D19S433", "vWA", "TPOX", "D18S51"] },
+      { dye: "red", label: "PET", loci: ["D5S818", "FGA"] },
     ],
   },
   {
@@ -164,13 +170,12 @@ export const KITS: Kit[] = [
     ],
   },
   {
-    id: "powerplexfusion",
-    name: "PowerPlex Fusion",
+    id: "powerplex16",
+    name: "PowerPlex 16 / 16 HS",
     panels: [
-      { dye: "blue", label: "Fluorescein", loci: ["D3S1358", "D1S1656", "D2S441", "D10S1248", "D13S317", "Penta E"] },
-      { dye: "green", label: "JOE", loci: ["D16S539", "D18S51", "D2S1338", "CSF1PO", "Penta D"] },
-      { dye: "yellow", label: "TMR-ET", loci: ["TH01", "vWA", "D21S11", "D7S820", "D5S818", "TPOX"] },
-      { dye: "red", label: "CXR-ET", loci: ["D8S1179", "D12S391", "D19S433", "FGA", "D22S1045"] },
+      { dye: "blue", label: "Fluorescein", loci: ["D3S1358", "TH01", "D21S11", "D18S51", "Penta E"] },
+      { dye: "green", label: "JOE", loci: ["D5S818", "D13S317", "D7S820", "D16S539", "CSF1PO", "Penta D"] },
+      { dye: "yellow", label: "TMR", loci: ["vWA", "D8S1179", "TPOX", "FGA"] },
     ],
   },
   {
@@ -185,7 +190,7 @@ export const KITS: Kit[] = [
   },
 ];
 
-export const DEFAULT_KIT_ID = "identifiler";
+export const DEFAULT_KIT_ID = "globalfiler";
 
 export function kitById(id: string): Kit {
   return KITS.find((kit) => kit.id === id) ?? KITS[0];

@@ -5,6 +5,7 @@ export const es = {
   "app.disclaimer":
     "Herramienta de apoyo al cálculo estadístico. No sustituye la validación, los controles ni el criterio del laboratorio que emite el informe.",
 
+  "nav.main": "Principal",
   "nav.case": "Caso",
   "nav.report": "Informe",
   "nav.populations": "Poblaciones",

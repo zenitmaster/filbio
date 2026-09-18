@@ -30,7 +30,7 @@ const CONSISTENT_TRIO: Record<string, Row> = {
   D13S317: ["9/11", "11/12", "12/13"],
   D16S539: ["10/12", "12/13", "11/13"],
   D2S1338: ["17/23", "19/23", "19/20"],
-  D19S433: ["13/14", "14/15.2", "13.2/15.2"],
+  D19S433: ["13/14", "14/15.2", "13/15.2"],
   vWA: ["16/17", "16/18", "17/18"],
   TPOX: ["8/11", "8/8", "8/12"],
   D18S51: ["14/17", "14/15", "15/16"],
@@ -39,6 +39,15 @@ const CONSISTENT_TRIO: Record<string, Row> = {
   // Typed by the PowerPlex kits rather than Identifiler.
   "Penta D": ["9/12", "12/13", "10/13"],
   "Penta E": ["7/12", "12/15", "15/17"],
+  // The markers added by the expanded CODIS core (GlobalFiler, PowerPlex Fusion)...
+  D2S441: ["10/11", "11/14", "14/15"],
+  D22S1045: ["15/16", "16/17", "11/17"],
+  SE33: ["17/28.2", "17/19", "19/27.2"],
+  D10S1248: ["13/15", "13/14", "14/16"],
+  D1S1656: ["12/16", "12/15", "15/17.3"],
+  D12S391: ["18/21", "18/22", "19/22"],
+  // ...and by PowerPlex 21.
+  D6S1043: ["11/12", "12/19", "13/19"],
 };
 
 const base = {
@@ -58,12 +67,12 @@ export type ExampleId = "trio" | "mutation" | "exclusion";
 
 export const EXAMPLES: Record<ExampleId, CaseData> = {
   /** Every locus fits: a plain inclusion. */
-  trio: { ...base, caseId: "EJEMPLO-1", mode: "trio", alleles: entries(CONSISTENT_TRIO) },
+  trio: { ...base, caseId: "DEMO-1", mode: "trio", alleles: entries(CONSISTENT_TRIO) },
 
   /** As above, but FGA needs a one-step paternal mutation (22 -> 21). */
   mutation: {
     ...base,
-    caseId: "EJEMPLO-2",
+    caseId: "DEMO-2",
     mode: "trio",
     alleles: entries({ ...CONSISTENT_TRIO, FGA: ["22/24", "21/24", "22/25"] }),
   },
@@ -71,7 +80,7 @@ export const EXAMPLES: Record<ExampleId, CaseData> = {
   /** Child and alleged father only, and they disagree at six loci. */
   exclusion: {
     ...base,
-    caseId: "EJEMPLO-3",
+    caseId: "DEMO-3",
     mode: "duo",
     alleles: entries({
       ...CONSISTENT_TRIO,

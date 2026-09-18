@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { useAppStore } from "./index";
+import { DEFAULT_SETTINGS, migrateSavedState, useAppStore } from "./index";
 
 const state = () => useAppStore.getState();
 
@@ -40,7 +40,32 @@ describe("importProfiles", () => {
   });
 
   it("adds markers the case had never seen", () => {
-    state().importProfiles({ child: { SE33: ["17", "28.2"] } });
-    expect(state().caseData.alleles.SE33).toEqual({ known: ["", ""], child: ["17", "28.2"], alleged: ["", ""] });
+    expect(state().caseData.alleles.F13A01).toBeUndefined(); // no kit here types it, so no demo has it
+    state().importProfiles({ child: { F13A01: ["5", "7"] } });
+    expect(state().caseData.alleles.F13A01).toEqual({ known: ["", ""], child: ["5", "7"], alleged: ["", ""] });
+  });
+});
+
+describe("opening defaults and saved state", () => {
+  it("opens in English", () => {
+    expect(DEFAULT_SETTINGS.locale).toBe("en");
+  });
+
+  it("moves a state saved before English became the default over to it, once", () => {
+    const saved = { caseData: { caseId: "0042" }, settings: { locale: "es", kitId: "identifiler", populationId: "mx-centro-2013" } };
+    expect(migrateSavedState(saved, 1)).toEqual({
+      caseData: { caseId: "0042" }, // the case is kept
+      // The kit and population are the laboratory's working choices: left alone.
+      settings: { locale: "en", kitId: "identifiler", populationId: "mx-centro-2013" },
+    });
+  });
+
+  it("respects a language chosen since then", () => {
+    const saved = { settings: { locale: "es" } };
+    expect(migrateSavedState(saved, 2)).toEqual({ settings: { locale: "es" } });
+  });
+
+  it("copes with nothing saved", () => {
+    expect(migrateSavedState(undefined, 1)).toEqual({});
   });
 });
