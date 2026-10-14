@@ -125,7 +125,8 @@ export interface Kit {
 /**
  * Listed with the kits most used in the United States first: the two that type
  * the 20 expanded CODIS core loci, then the older 15-locus kits, then the
- * European set.
+ * European set. QIAGEN's Investigator 26plex QS types the expanded core too,
+ * but is little used in the United States, so it comes last.
  */
 export const KITS: Kit[] = [
   {
@@ -188,6 +189,19 @@ export const KITS: Kit[] = [
       { dye: "red", label: "PET", loci: ["D2S441", "D3S1358", "D1S1656", "D12S391", "SE33"] },
     ],
   },
+  {
+    // As in QIAGEN's handbook and validation report. Amelogenin, DYS391 and the
+    // quality sensors QS1 and QS2 are amplified alongside; BTO is the size standard.
+    id: "investigator26plexqs",
+    name: "Investigator 26plex QS",
+    panels: [
+      { dye: "blue", label: "6-FAM", loci: ["TH01", "D3S1358", "Penta D", "D6S1043", "D21S11"] },
+      { dye: "green", label: "BTG", loci: ["TPOX", "D1S1656", "D12S391", "Penta E"] },
+      { dye: "yellow", label: "BTY", loci: ["D10S1248", "D22S1045", "D19S433", "D8S1179", "D2S1338"] },
+      { dye: "red", label: "BTR2", loci: ["D2S441", "D18S51", "vWA", "FGA"] },
+      { dye: "purple", label: "BTP", loci: ["D16S539", "CSF1PO", "D13S317", "D5S818", "D7S820"] },
+    ],
+  },
 ];
 
 export const DEFAULT_KIT_ID = "globalfiler";
@@ -215,4 +229,12 @@ function aliasKey(name: string): string {
 /** Maps "THO1", "penta_e", "VWA"... to the canonical locus id, or null. */
 export function canonicalLocus(name: string): LocusId | null {
   return ALIAS_KEYS[aliasKey(name)] ?? null;
+}
+
+/**
+ * As canonicalLocus, but a name for amelogenin gives SEX_MARKER: "AMEL",
+ * "Amelogenin", or "AM", as QIAGEN's GeneMapper panels call it.
+ */
+export function canonicalMarker(name: string): LocusId | null {
+  return /^am(el|$)/i.test(name) ? SEX_MARKER : canonicalLocus(name);
 }

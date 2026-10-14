@@ -91,6 +91,10 @@ describe("parseProfileTable", () => {
     expect(table.profiles.alleged?.FGA).toEqual(["21", "25"]);
   });
 
+  it("reads amelogenin under QIAGEN's name for it, AM", () => {
+    expect(parseProfileTable("Marcador,Hijo 1,Hijo 2\nAM,X,Y").profiles.child).toEqual({ AMEL: ["X", "Y"] });
+  });
+
   it("finds the header under a title line", () => {
     const table = parseProfileTable("Caso 0042\n\nMarcador,Hijo 1,Hijo 2\nFGA,21,24");
     expect(table.profiles.child?.FGA).toEqual(["21", "24"]);

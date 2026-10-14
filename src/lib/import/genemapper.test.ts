@@ -74,6 +74,34 @@ describe("parseGeneMapper", () => {
   });
 });
 
+describe("an Investigator 26plex QS export", () => {
+  // QIAGEN's GeneMapper ID-X panels call amelogenin "AM", write "PentaE" without
+  // the space, and add two internal PCR controls, QS1 and QS2.
+  const qiagen = (marker: string, dye: string, ...alleles: string[]) =>
+    ["A01_HP-0042.hid", "HP-0042", "26plex_Panels", marker, dye, alleles[0] ?? "", alleles[1] ?? "", "", "", "", "", ""].join("\t");
+  const parsed = parseGeneMapper(
+    [
+      HEADER,
+      qiagen("AM", "B", "X", "Y"),
+      qiagen("Penta D", "B", "9", "12"),
+      qiagen("TPOX", "G", "8", "11"),
+      qiagen("DYS391", "G", "10"),
+      qiagen("PentaE", "G", "12", "15"),
+      qiagen("QS1", "P", "Q"),
+      qiagen("QS2", "P", "Q"),
+    ].join("\r\n"),
+  );
+
+  it("reads amelogenin under QIAGEN's name for it", () => {
+    expect(parsed.samples[0].markers).toEqual({ AMEL: ["X", "Y"], "Penta D": ["9", "12"], TPOX: ["8", "11"], "Penta E": ["12", "15"] });
+  });
+
+  it("sets aside DYS391 and the quality sensors", () => {
+    expect(parsed.markers).toEqual(["Penta D", "TPOX", "Penta E"]);
+    expect(parsed.skipped).toEqual(["DYS391", "QS1", "QS2"]);
+  });
+});
+
 describe("toProfile", () => {
   const father = parseGeneMapper(EXPORT).samples[2];
   const { alleles, warnings } = toProfile(father);
@@ -110,6 +138,17 @@ describe("bestKit", () => {
     expect(bestKit(["D3S1358", "TH01", "D21S11", "D18S51", "Penta E", "D5S818", "D13S317", "D7S820", "D16S539", "CSF1PO", "Penta D", "vWA", "D8S1179", "TPOX", "FGA"])?.id).toBe("powerplex16");
     expect(bestKit(["D3S1358", "vWA", "D16S539", "CSF1PO", "TPOX", "D8S1179", "D21S11", "D18S51", "D2S441", "D19S433", "TH01", "FGA", "D22S1045", "D5S818", "D13S317", "D7S820", "SE33", "D10S1248", "D1S1656", "D12S391", "D2S1338"])?.id).toBe("globalfiler");
     expect(bestKit([])).toBeNull();
+  });
+
+  it("tells the 26plex QS from the PowerPlex kits it overlaps", () => {
+    // The 26plex QS adds D6S1043 to the PowerPlex Fusion markers; PowerPlex 21
+    // lacks D2S441, D10S1248 and D22S1045.
+    const fusion = ["D3S1358", "D1S1656", "D2S441", "D10S1248", "D13S317", "Penta E", "D16S539", "D18S51", "D2S1338", "CSF1PO", "Penta D", "TH01", "vWA", "D21S11", "D7S820", "D5S818", "TPOX", "D8S1179", "D12S391", "D19S433", "FGA", "D22S1045"];
+    const qs26 = ["TH01", "D3S1358", "Penta D", "D6S1043", "D21S11", "TPOX", "D1S1656", "D12S391", "Penta E", "D10S1248", "D22S1045", "D19S433", "D8S1179", "D2S1338", "D2S441", "D18S51", "vWA", "FGA", "D16S539", "CSF1PO", "D13S317", "D5S818", "D7S820"];
+    const powerplex21 = ["D3S1358", "D1S1656", "D6S1043", "D13S317", "Penta E", "D16S539", "D18S51", "D2S1338", "CSF1PO", "Penta D", "TH01", "vWA", "D21S11", "D7S820", "D5S818", "TPOX", "D8S1179", "D12S391", "D19S433", "FGA"];
+    expect(bestKit(qs26)?.id).toBe("investigator26plexqs");
+    expect(bestKit(fusion)?.id).toBe("powerplexfusion");
+    expect(bestKit(powerplex21)?.id).toBe("powerplex21");
   });
 });
 
