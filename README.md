@@ -30,15 +30,17 @@ profiles never leave the browser they are typed into.**
 - Checks the analyst would otherwise do by eye: a known parent who does not fit the child
   (sample mix-up), opposite homozygotes (possible null allele), amelogenin against the
   recorded sex, alleles absent from the population table.
-- Kits: GlobalFiler (the default), PowerPlex Fusion, Identifiler, PowerPlex 21 / 16, NGM SElect. Markers are
-  grouped by dye channel, in the order they are read off the electropherogram.
+- Kits: GlobalFiler (the default), PowerPlex Fusion, Identifiler, PowerPlex 21 / 16, NGM SElect,
+  Investigator 26plex QS. Markers are grouped by dye channel, in the order they are read off the
+  electropherogram.
 - **Allele dropdowns**: each cell lists the alleles the selected population has for that
   marker, with their frequencies. Any other allele can still be typed; it is accepted as a
   custom value and flagged, which catches typing errors.
 - **Import from Applied Biosystems GeneMapper ID / ID-X**: load the exported genotype table
   (File ▸ Export Table), and the samples are matched to mother, child and alleged father from
   their names. The kit is recognised from the markers; off-ladder calls and markers with more
-  than two alleles are pointed out.
+  than two alleles are pointed out. QIAGEN's marker names are understood (AM for amelogenin),
+  and its quality sensors QS1 and QS2 are set aside.
 - **Import from a CSV template**: download a template for the selected kit (one row per
   marker, two columns per person, like the entry table), fill it in with Excel and load it
   back. The same dialog recognises either format. Columns are matched by their headers, in

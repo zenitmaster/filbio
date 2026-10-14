@@ -1,5 +1,5 @@
 import {
-  canonicalLocus,
+  canonicalMarker,
   KITS,
   lociOfKit,
   SEX_MARKER,
@@ -100,7 +100,7 @@ export function parseGeneMapper(text: string): GeneMapperImport {
     const name = (nameAt >= 0 ? cells[nameAt] : "") || file;
     if (name === "") continue;
 
-    const marker = /^amel/i.test(rawMarker) ? SEX_MARKER : canonicalLocus(rawMarker);
+    const marker = canonicalMarker(rawMarker);
     if (!marker) {
       skipped.add(rawMarker);
       continue;

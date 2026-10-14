@@ -1,4 +1,4 @@
-import { canonicalLocus, SEX_MARKER, type LocusId } from "@/lib/genetics";
+import { canonicalMarker, SEX_MARKER, type LocusId } from "@/lib/genetics";
 import type { SubjectRole } from "@/lib/store/types";
 import { csvField, parseDelimited } from "./csv";
 
@@ -84,7 +84,7 @@ export function parseProfileTable(text: string): ProfileTable {
   for (const row of rows.slice(headerAt + 1)) {
     const name = row[markerAt] ?? "";
     if (name === "") continue;
-    const marker = /^amel/i.test(name) ? SEX_MARKER : canonicalLocus(name);
+    const marker = canonicalMarker(name);
     if (!marker) {
       if (!result.unknownMarkers.includes(name)) result.unknownMarkers.push(name);
       continue;

@@ -90,7 +90,7 @@ describe("defaults and order, for a laboratory in the United States", () => {
 
   it("opens on GlobalFiler, with the kits most used in the United States first", () => {
     expect(DEFAULT_KIT_ID).toBe("globalfiler");
-    expect(KITS.map((kit) => kit.id)).toEqual(["globalfiler", "powerplexfusion", "identifiler", "powerplex21", "powerplex16", "ngmselect"]);
+    expect(KITS.map((kit) => kit.id)).toEqual(["globalfiler", "powerplexfusion", "identifiler", "powerplex21", "powerplex16", "ngmselect", "investigator26plexqs"]);
   });
 });
 
@@ -162,5 +162,16 @@ describe("kits", () => {
       expect(new Set(loci).size, kit.id).toBe(loci.length);
       for (const locus of loci) expect(LOCI[locus], `${kit.id} ${locus}`).toBeDefined();
     }
+  });
+
+  it("type the autosomal STRs QIAGEN lists for the Investigator 26plex QS", () => {
+    // Its developmental validation report (02/2020), in the order printed there,
+    // leaving out DYS391; amelogenin and the quality sensors are not listed.
+    const listed = [
+      "D1S1656", "D2S441", "D2S1338", "D3S1358", "D5S818", "D6S1043", "D7S820", "D8S1179",
+      "D10S1248", "D12S391", "D13S317", "D16S539", "D18S51", "D19S433", "D21S11",
+      "D22S1045", "CSF1PO", "FGA", "Penta D", "Penta E", "TH01", "TPOX", "vWA",
+    ];
+    expect([...lociOfKit(kitById("investigator26plexqs"))].sort()).toEqual([...listed].sort());
   });
 });
